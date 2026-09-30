@@ -1,5 +1,9 @@
 AddCSLuaFile()
 
+if (SERVER) then
+  resource.AddWorkshop("3810718443")
+end
+
 bicycle = bicycle or {}
 
 bicycle.ENTITY_CLASS = "sent_bicycle"

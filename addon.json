@@ -1,0 +1,16 @@
+{
+  "title": "Bicycle",
+  "type": "vehicle",
+  "tags": ["fun", "realism"],
+  "ignore": [
+    ".git/*",
+    ".github/*",
+    ".editorconfig",
+    ".gitignore",
+    "*.md",
+    "LICENSE",
+    "modelsrc/*",
+    "tools/*",
+    "*.gma"
+  ]
+}

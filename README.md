@@ -8,7 +8,7 @@ the pedals.
 
 ## Installing
 **Steam Workshop (recommended):** subscribe on the
-[Workshop page](https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXX) and it will download the next time you
+[Workshop page](https://steamcommunity.com/sharedfiles/filedetails/?id=3810718443) and it will download the next time you
 start Garry's Mod.
 
 **Manually:** download this repository and put the contents of this repo in a `bicycle` folder in `garrysmod/addons/`.
