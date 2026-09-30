@@ -1,0 +1,14 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "models/bicycle/bicycle"
+	"$bumpmap" "models/bicycle/bicycle_normal"
+	"$surfaceprop" "metal"
+  
+  "$blendtintbybasealpha" 1
+
+	// The normal map's alpha is the model's smoothness, used as the phong mask.
+	"$phong" "1"
+	"$phongboost" "2"
+	"$phongexponent" "24"
+	"$phongfresnelranges" "[0.3 0.6 1]"
+}

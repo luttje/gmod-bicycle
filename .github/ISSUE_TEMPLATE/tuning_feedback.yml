@@ -1,0 +1,40 @@
+name: Riding feel / tuning feedback
+description: Nothing is broken, but the bike feels off (too fast, too twitchy, falls over too easily, ...).
+title: "[Feel] "
+labels: [ "tuning" ]
+body:
+- type: textarea
+  id: feel
+  attributes:
+    label: What feels off?
+    description: Describe the situation and what you'd expect a bike to do.
+    placeholder: At full speed a small tap on A/D makes the bike lean way too far and it almost falls over.
+  validations:
+    required: true
+
+- type: textarea
+  id: tuning
+  attributes:
+    label: Your tuning
+    description: |
+      If you changed settings to make it feel better, run `bicycle_dump_tuning` in the console and paste the output.
+      It marks every value you changed, so we can try your setup directly.
+    render: text
+
+- type: textarea
+  id: media
+  attributes:
+    label: Video or screenshots
+    description: Optional, but for handling a short clip says more than a paragraph.
+
+- type: dropdown
+  id: bike
+  attributes:
+    label: Which bike?
+    description: If it's a custom bike, name it and link to it in the description above.
+    multiple: true
+    options:
+    - Built-in default bike
+    - Custom bike model
+  validations:
+    required: true

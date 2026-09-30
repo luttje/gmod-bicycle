@@ -1,0 +1,412 @@
+include("shared.lua")
+
+local FULL_TURN = math.pi * 2
+
+-- The rider's limbs, each reaching for an attachment on the bike. `side` is 1 on the bike's left, -1 on its right.
+local RIDER_LEGS = {
+  {
+    side = 1,
+    thigh = "ValveBiped.Bip01_L_Thigh",
+    calf = "ValveBiped.Bip01_L_Calf",
+    foot = "ValveBiped.Bip01_L_Foot",
+    toe = "ValveBiped.Bip01_L_Toe0",
+    pedalAttachment = "pedal_L",
+    -- The left pedal is at the top at crank angle 0, the right one half a turn on.
+    crankOffset = 0,
+  },
+  {
+    side = -1,
+    thigh = "ValveBiped.Bip01_R_Thigh",
+    calf = "ValveBiped.Bip01_R_Calf",
+    foot = "ValveBiped.Bip01_R_Foot",
+    toe = "ValveBiped.Bip01_R_Toe0",
+    pedalAttachment = "pedal_R",
+    crankOffset = math.pi,
+  },
+}
+local RIDER_ARMS = {
+  {
+    side = 1,
+    upperArm = "ValveBiped.Bip01_L_UpperArm",
+    forearm = "ValveBiped.Bip01_L_Forearm",
+    hand = "ValveBiped.Bip01_L_Hand",
+    finger = "ValveBiped.Bip01_L_Finger2",
+    gripAttachment = "grip_L",
+  },
+  {
+    side = -1,
+    upperArm = "ValveBiped.Bip01_R_UpperArm",
+    forearm = "ValveBiped.Bip01_R_Forearm",
+    hand = "ValveBiped.Bip01_R_Hand",
+    finger = "ValveBiped.Bip01_R_Finger2",
+    gripAttachment = "grip_R",
+  },
+}
+
+-- Where the handlebar sits in the fist: this far from the wrist towards the middle finger's knuckle.
+local GRIP_ALONG_HAND = 0.8
+-- Moving the forearm turns the hand too, so the arm is solved again from where the hand ended up.
+local ARM_SOLVE_PASSES = 2
+-- Knees bend forward, elbows back and down.
+local ELBOW_BACK = 0.3
+
+-- Every animated bone turns around its own local Y axis (its head to tail line in Blender), which is what
+-- ManipulateBoneAngles calls pitch. The wheels, crank and pedals have that axis pointing left, so positive pitch rolls
+-- them forward. The fork's axis is the steering axis pointing up, so positive pitch steers left.
+local ANIMATED_BONES = {
+  rearWheel = "wheel_rear",
+  frontWheel = "wheel_front",
+  fork = "fork",
+  crank = "crank",
+  leftPedal = "pedal_L",
+  rightPedal = "pedal_R",
+}
+
+-- Attachments shown by the debug overlay: the seat and the hand and foot targets.
+local DEBUG_ATTACHMENTS = { "seat", "grip_L", "grip_R", "pedal_L", "pedal_R" }
+
+local DEBUG_DISTANCE = 1500
+local DEBUG_WHEEL_SEGMENTS = 32
+local DEBUG_WHEEL_SPOKES = 4
+local DEBUG_LINE_LENGTH = 40
+local DEBUG_VELOCITY_SCALE = 0.1
+local DEBUG_ATTACHMENT_RADIUS = 1
+local EDITOR_MARKER_RADIUS = 1.2
+-- Length of the line showing the tilt of the rider's back.
+local EDITOR_SPINE_LENGTH = 12
+
+function ENT:Initialize()
+  self.wheelSpinAngle = 0
+  self.crankAngle = 0
+end
+
+--- The server measures the model on spawn, clients take over its measurements once they arrive.
+function ENT:SyncGeometry()
+  local wheelRadius = self:GetWheelRadius()
+
+  if (wheelRadius <= 0 or wheelRadius == self.syncedWheelRadius) then
+    return
+  end
+
+  self.syncedWheelRadius = wheelRadius
+  self:ApplyGeometry(self:GetRearHub(), self:GetFrontHub(), wheelRadius)
+  -- Measured the same way as on the server, for the bike editor's seat marker.
+  self.SeatPosition = self:GetAttachmentLocalPosition(self.SeatAttachment) or self.SeatPosition
+end
+
+--- @return table # Bone indices by the keys of `ANIMATED_BONES`, missing bones are left out
+function ENT:GetAnimatedBones()
+  if (self.animatedBones) then
+    return self.animatedBones
+  end
+
+  local bones = {}
+
+  for key, boneName in pairs(ANIMATED_BONES) do
+    bones[key] = self:LookupBone(boneName)
+  end
+
+  self.animatedBones = bones
+
+  return bones
+end
+
+local function setBonePitch(entity, bone, pitch)
+  if (bone) then
+    entity:ManipulateBoneAngles(bone, Angle(pitch, 0, 0))
+  end
+end
+
+--- Spins the wheels, steers the fork and turns the cranks, with the pedals counter-rotating so they stay level.
+function ENT:UpdateBones()
+  local bones = self:GetAnimatedBones()
+  local wheelSpin = math.deg(self.wheelSpinAngle)
+  local crankAngle = math.deg(self.crankAngle)
+
+  setBonePitch(self, bones.rearWheel, wheelSpin)
+  setBonePitch(self, bones.frontWheel, wheelSpin)
+  setBonePitch(self, bones.fork, -self:GetSteer())
+  setBonePitch(self, bones.crank, crankAngle)
+  setBonePitch(self, bones.leftPedal, -crankAngle)
+  setBonePitch(self, bones.rightPedal, -crankAngle)
+end
+
+function ENT:Draw()
+  self:DrawModel()
+end
+
+--- @return ... # The bone index for each name, in the same order, nil when missing
+local function lookupBones(entity, ...)
+  local names = { ... }
+  local bones = {}
+
+  for index, name in ipairs(names) do
+    bones[index] = entity:LookupBone(name)
+  end
+
+  return unpack(bones, 1, #names)
+end
+
+function ENT:GetAttachmentPosition(attachmentName)
+  local attachment = self:GetAttachment(self:LookupAttachment(attachmentName))
+
+  return attachment and attachment.Pos
+end
+
+--- @return Vector? # Where the ball of the foot goes: out from the pedal attachment and above its axle
+function ENT:GetFootBallTarget(leg, left, up)
+  local pedalPosition = self:GetAttachmentPosition(leg.pedalAttachment)
+
+  return pedalPosition and pedalPosition + left * (leg.side * self.PedalCenterOffset) + up * self.FootBallHeight
+end
+
+--- @return Vector? # Where the hand holds: the grip attachment moved by the model's grip offset
+function ENT:GetGripTarget(arm, forward, left, up)
+  local gripPosition = self:GetAttachmentPosition(arm.gripAttachment)
+  local gripOffset = self.GripOffset
+
+  return gripPosition and gripPosition + forward * gripOffset.x + left * (arm.side * gripOffset.y) + up * gripOffset.z
+end
+
+--- Plants the ball of the foot on the pedal, with the foot's angle following the pedal stroke (ankling).
+function ENT:PoseRiderLeg(rider, leg, forward, left, up)
+  local footBall = self:GetFootBallTarget(leg, left, up)
+  local thigh, calf, foot, toe = lookupBones(rider, leg.thigh, leg.calf, leg.foot, leg.toe)
+
+  if (not footBall or not thigh or not calf or not foot) then
+    return
+  end
+
+  -- The heel drops as the pedal comes over the front and lifts as it goes round the back.
+  local pedalAngle = self.crankAngle + leg.crankOffset
+  local toeDown = math.rad(
+    bicycle.getClientSetting("rider_foot_pitch") - bicycle.getClientSetting("rider_ankling") * math.sin(pedalAngle)
+  )
+  local footDirection = forward * math.cos(toeDown) - up * math.sin(toeDown)
+
+  local footPosition, toePosition = bicycle.ik.getBonePosition(rider, foot), bicycle.ik.getBonePosition(rider, toe)
+  local footLength = (footPosition and toePosition) and footPosition:Distance(toePosition) or 0
+  local kneePole = forward + left * (leg.side * bicycle.getClientSetting("rider_knee_out"))
+
+  bicycle.ik.solveLimb(rider, thigh, calf, foot, footBall - footDirection * footLength, kneePole)
+
+  if (footLength > 0) then
+    footPosition, toePosition = bicycle.ik.getBonePosition(rider, foot), bicycle.ik.getBonePosition(rider, toe)
+
+    if (footPosition and toePosition) then
+      bicycle.ik.aimBone(rider, foot, toePosition - footPosition, footDirection)
+    end
+  end
+end
+
+--- Closes the hand around the grip, keeping the hand's own pose from the rider's sequence.
+function ENT:PoseRiderArm(rider, arm, forward, left, up)
+  local gripPosition = self:GetGripTarget(arm, forward, left, up)
+  local upperArm, forearm, hand, finger = lookupBones(rider, arm.upperArm, arm.forearm, arm.hand, arm.finger)
+
+  if (not gripPosition or not upperArm or not forearm or not hand) then
+    return
+  end
+
+  local elbowPole = left * (arm.side * bicycle.getClientSetting("rider_elbow_out")) - up - forward * ELBOW_BACK
+
+  for _ = 1, ARM_SOLVE_PASSES do
+    local handPosition = bicycle.ik.getBonePosition(rider, hand)
+
+    -- Bones the engine skips in this setup pass have no matrix.
+    if (not handPosition) then
+      return
+    end
+
+    local fingerPosition = bicycle.ik.getBonePosition(rider, finger)
+    local fistCenter = fingerPosition and LerpVector(GRIP_ALONG_HAND, handPosition, fingerPosition) or handPosition
+
+    bicycle.ik.solveLimb(rider, upperArm, forearm, hand, handPosition + (gripPosition - fistCenter), elbowPole)
+  end
+end
+
+--- Runs inside the rider's "BuildBonePositions", after their sequence has posed them.
+function ENT:PoseRider(rider)
+  if (self:GetRider() ~= rider or not bicycle.getClientSettingBool("rider_ik")) then
+    return
+  end
+
+  bicycle.ik.beginPass(rider)
+
+  local angles = self:GetAngles()
+  local forward, left, up = angles:Forward(), -angles:Right(), angles:Up()
+
+  for _, leg in ipairs(RIDER_LEGS) do
+    self:PoseRiderLeg(rider, leg, forward, left, up)
+  end
+
+  for _, arm in ipairs(RIDER_ARMS) do
+    self:PoseRiderArm(rider, arm, forward, left, up)
+  end
+end
+
+function ENT:StopPosingRider()
+  if (IsValid(self.posedRider) and self.riderPoseCallback) then
+    self.posedRider:RemoveCallback("BuildBonePositions", self.riderPoseCallback)
+  end
+
+  self.posedRider = nil
+  self.riderPoseCallback = nil
+end
+
+--- Hooks the rider's bone setup whenever someone else gets on.
+function ENT:UpdateRiderPose()
+  local rider = self:GetRider()
+
+  if (self.posedRider == rider) then
+    return
+  end
+
+  self:StopPosingRider()
+
+  if (not IsValid(rider)) then
+    return
+  end
+
+  self.posedRider = rider
+  self.riderPoseCallback = rider:AddCallback("BuildBonePositions", function(player)
+    -- A dormant bike's Think doesn't run, so it can't unhook itself and its rider may be stale.
+    if (IsValid(self) and not self:IsDormant()) then
+      self:PoseRider(player)
+    end
+  end)
+end
+
+function ENT:IsWithinDebugDistance()
+  return self:GetPos():DistToSqr(EyePos()) < DEBUG_DISTANCE * DEBUG_DISTANCE
+end
+
+--- The client traces the wheels itself for the debug overlay, as the server's contacts aren't networked.
+function ENT:UpdateDebugWheelContacts()
+  if (not bicycle.isDebugEnabled() or not self:IsWithinDebugDistance()) then
+    self.debugWheelContacts = nil
+    return
+  end
+
+  self.debugWheelContacts = self.debugWheelContacts or {}
+
+  for index = 1, #self.Wheels do
+    self.debugWheelContacts[index] = self:TraceWheel(index)
+  end
+end
+
+function ENT:Think()
+  local deltaTime = FrameTime()
+
+  self:SyncGeometry()
+
+  self.wheelSpinAngle = (self.wheelSpinAngle + self:GetForwardSpeed() / self.WheelRadius * deltaTime) % FULL_TURN
+  self.crankAngle = (self.crankAngle + self:GetCadence() / 60 * FULL_TURN * deltaTime) % FULL_TURN
+
+  self:UpdateBones()
+  self:UpdateRiderPose()
+  self:UpdateDebugWheelContacts()
+
+  self:SetNextClientThink(CurTime())
+  return true
+end
+
+function ENT:OnRemove()
+  self:StopPosingRider()
+end
+
+--- Draws the wheels as the ride simulates them, with their spin and steering and where they touch the ground, to
+--- compare against the model's own wheels.
+function ENT:DrawDebugWheel(index, wheel)
+  local colors = bicycle.debugColors
+  local radius = self.WheelRadius
+  local hubPosition = self:LocalToWorld(wheel.position)
+  local wheelAngles = Angle(self:GetAngles())
+
+  if (wheel.isFront) then
+    wheelAngles:RotateAroundAxis(wheelAngles:Up(), -self:GetSteer())
+  end
+
+  local forward, up = wheelAngles:Forward(), wheelAngles:Up()
+  local contact = self.debugWheelContacts and self.debugWheelContacts[index]
+  local color = (contact and contact.isGrounded) and colors.grounded or colors.airborne
+
+  local function getRimPoint(angle)
+    return hubPosition + forward * (math.cos(angle) * radius) + up * (math.sin(angle) * radius)
+  end
+
+  local previousPoint = getRimPoint(0)
+
+  for segment = 1, DEBUG_WHEEL_SEGMENTS do
+    local point = getRimPoint(segment / DEBUG_WHEEL_SEGMENTS * FULL_TURN)
+
+    render.DrawLine(previousPoint, point, color, false)
+    previousPoint = point
+  end
+
+  for spoke = 0, DEBUG_WHEEL_SPOKES - 1 do
+    render.DrawLine(hubPosition, getRimPoint(-self.wheelSpinAngle + spoke * FULL_TURN / DEBUG_WHEEL_SPOKES), color, false)
+  end
+
+  if (contact and contact.isHit) then
+    render.DrawLine(hubPosition, contact.contactPosition, colors.wheelTrace, false)
+    render.DrawWireframeSphere(contact.contactPosition, 1.2, 6, 6, color, false)
+  end
+end
+
+function ENT:DrawDebug()
+  local colors = bicycle.debugColors
+
+  for index, wheel in ipairs(self.Wheels) do
+    self:DrawDebugWheel(index, wheel)
+  end
+
+  for _, attachmentName in ipairs(DEBUG_ATTACHMENTS) do
+    local attachment = self:GetAttachment(self:LookupAttachment(attachmentName))
+
+    if (attachment) then
+      render.DrawWireframeSphere(attachment.Pos, DEBUG_ATTACHMENT_RADIUS, 6, 6, colors.attachment, false)
+    end
+  end
+
+  local position = self:GetPos()
+  local flatRight = self:GetRight()
+  flatRight.z = 0
+  flatRight:Normalize()
+
+  local targetLeanRadians = math.rad(self:GetTargetLean())
+  local targetUp = vector_up * math.cos(targetLeanRadians) + flatRight * math.sin(targetLeanRadians)
+
+  render.DrawLine(position, position + self:GetUp() * DEBUG_LINE_LENGTH, colors.actualLean, false)
+  render.DrawLine(position, position + targetUp * DEBUG_LINE_LENGTH, colors.targetLean, false)
+  render.DrawLine(position, position + self:GetVelocity() * DEBUG_VELOCITY_SCALE, colors.velocity, false)
+end
+
+--- Marks where the model's settings place the rider: the seat with the tilt of the rider's back, and the hand and foot
+--- targets.
+function ENT:DrawEditorOverlay()
+  local colors = bicycle.debugColors
+  local angles = self:GetAngles()
+  local forward, left, up = angles:Forward(), -angles:Right(), angles:Up()
+  local seatPosition = self:LocalToWorld(self:GetSeatOffset())
+  local seatUp = self:LocalToWorldAngles(self:GetSeatLocalAngles()):Up()
+
+  render.DrawWireframeSphere(seatPosition, EDITOR_MARKER_RADIUS, 8, 8, colors.editorSeat, false)
+  render.DrawLine(seatPosition, seatPosition + seatUp * EDITOR_SPINE_LENGTH, colors.editorSeat, false)
+
+  for _, arm in ipairs(RIDER_ARMS) do
+    local target = self:GetGripTarget(arm, forward, left, up)
+
+    if (target) then
+      render.DrawWireframeSphere(target, EDITOR_MARKER_RADIUS, 8, 8, colors.editorGrip, false)
+    end
+  end
+
+  for _, leg in ipairs(RIDER_LEGS) do
+    local target = self:GetFootBallTarget(leg, left, up)
+
+    if (target) then
+      render.DrawWireframeSphere(target, EDITOR_MARKER_RADIUS, 8, 8, colors.editorFoot, false)
+    end
+  end
+end

@@ -1,0 +1,56 @@
+name: Suggestion
+description: Suggest a new feature or a change to an existing one.
+title: "[Suggestion] "
+labels: [ "enhancement" ]
+body:
+- type: textarea
+  id: suggestion
+  attributes:
+    label: What do you suggest?
+    description: Describe the feature or change as clearly as you can.
+    placeholder: A bell you can ring with the R key.
+  validations:
+    required: true
+
+- type: textarea
+  id: reason
+  attributes:
+    label: Why?
+    description: |
+      What problem does it solve or what would it add? Who benefits from it (players, server owners, roleplay servers, ...)?
+      Suggestions with a clear reason are much more likely to get picked up.
+    placeholder: On roleplay servers there's no way to warn pedestrians that you're coming.
+  validations:
+    required: true
+
+- type: textarea
+  id: alternatives
+  attributes:
+    label: Alternatives
+    description: Did you think of other ways to get the same result? Does another addon or game already do this well?
+
+- type: textarea
+  id: examples
+  attributes:
+    label: Examples or mockups
+    description: Optional. Images, videos or links that show what you have in mind.
+
+- type: dropdown
+  id: bike
+  attributes:
+    label: Which bike?
+    description: Which bike does your suggestion apply to? If it's a custom bike, name it and link to it above.
+    multiple: true
+    options:
+    - Built-in default bike
+    - Custom bike model
+  validations:
+    required: true
+
+- type: checkboxes
+  id: checks
+  attributes:
+    label: Checklist
+    options:
+    - label: I searched the existing issues and this hasn't been suggested yet.
+      required: true
