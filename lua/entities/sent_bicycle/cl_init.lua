@@ -50,6 +50,11 @@ local ARM_SOLVE_PASSES = 2
 -- Knees bend forward, elbows back and down.
 local ELBOW_BACK = 0.3
 
+-- In first person the camera sits in the rider's head, so the neck and everything above it is shrunk to almost
+-- nothing. Not quite zero, as a degenerate bone matrix can break lighting and anything that inverts it.
+local RIDER_NECK_BONE = "ValveBiped.Bip01_Neck1"
+local SHRUNK_HEAD_SCALE = Vector(0.0001, 0.0001, 0.0001)
+
 -- Every animated bone turns around its own local Y axis (its head to tail line in Blender), which is what
 -- ManipulateBoneAngles calls pitch. The wheels, crank and pedals have that axis pointing left, so positive pitch rolls
 -- them forward. The fork's axis is the steering axis pointing up, so positive pitch steers left.
@@ -267,8 +272,6 @@ function ENT:PoseRider(rider)
     return
   end
 
-  bicycle.ik.beginPass(rider)
-
   local angles = self:GetAngles()
   local forward, left, up = angles:Forward(), -angles:Right(), angles:Up()
 
@@ -278,6 +281,45 @@ function ENT:PoseRider(rider)
 
   for _, arm in ipairs(RIDER_ARMS) do
     self:PoseRiderArm(rider, arm, forward, left, up)
+  end
+end
+
+--- Moves a bone to `position` and scales it there. Its children are left where they are.
+local function shrinkBone(entity, bone, position, scale)
+  local matrix = bone and entity:GetBoneMatrix(bone)
+
+  if (matrix) then
+    matrix:SetTranslation(position)
+    matrix:Scale(scale)
+    entity:SetBoneMatrix(bone, matrix)
+  end
+end
+
+--- Collapses the neck and head, with everything attached to them, while the local rider sees their body in first
+--- person. Runs inside the rider's "BuildBonePositions".
+function ENT:ShrinkRiderHead(rider)
+  -- Skipped while the camera measures where the rider's eyes are, see bicycle.getRiderEyePosition. While the camera
+  -- still eases in from the on-foot view it is outside the head, so the head stays until it arrives.
+  if (
+        self:GetRider() ~= rider
+        or rider.bicycleKeepHead
+        or not bicycle.isShowingFirstPersonBody(rider)
+        or bicycle.isBlendingFromFootView()
+      ) then
+    return
+  end
+
+  local neck = rider:LookupBone(RIDER_NECK_BONE)
+  local neckPosition = bicycle.ik.getBonePosition(rider, neck)
+
+  if (not neckPosition) then
+    return
+  end
+
+  shrinkBone(rider, neck, neckPosition, SHRUNK_HEAD_SCALE)
+
+  for _, descendant in ipairs(bicycle.ik.getDescendants(rider, neck)) do
+    shrinkBone(rider, descendant, neckPosition, SHRUNK_HEAD_SCALE)
   end
 end
 
@@ -308,7 +350,9 @@ function ENT:UpdateRiderPose()
   self.riderPoseCallback = rider:AddCallback("BuildBonePositions", function(player)
     -- A dormant bike's Think doesn't run, so it can't unhook itself and its rider may be stale.
     if (IsValid(self) and not self:IsDormant()) then
+      bicycle.ik.beginPass(player)
       self:PoseRider(player)
+      self:ShrinkRiderHead(player)
     end
   end)
 end

@@ -14,6 +14,11 @@ local CAMERA_HULL_MINS = Vector(-4, -4, -4)
 local CAMERA_HULL_MAXS = Vector(4, 4, 4)
 -- The on-foot view is only blended from when it was seen this recently.
 local MAX_FOOT_VIEW_AGE = 0.5
+-- How far (deg) a rider that sees their own body can look away from straight ahead. Looking down goes further, to see
+-- the pedals over the handlebar. Positive pitch looks down.
+local BODY_LOOK_MAX_YAW = 120
+local BODY_LOOK_MIN_PITCH = -60
+local BODY_LOOK_MAX_PITCH = 80
 
 local LEAN_GAUGE_LENGTH = 60
 local LEAN_GAUGE_MARKERS = { -45, 0, 45 }
@@ -34,6 +39,40 @@ function bicycle.findLocalBicycle()
   local bike = getLocalPlayerBicycle() or LocalPlayer():GetEyeTrace().Entity
 
   return (IsValid(bike) and bike.IsBicycle) and bike or nil
+end
+
+--- @return boolean # Whether `player` is the local player, riding in first person with bicycle_cam_body on
+function bicycle.isShowingFirstPersonBody(player)
+  if (player ~= LocalPlayer() or GetViewEntity() ~= player or not bicycle.getClientSettingBool("cam_body")) then
+    return false
+  end
+
+  local vehicle = player:GetVehicle()
+
+  return bicycle.getFromSeat(vehicle) ~= nil and not vehicle:GetThirdPersonMode()
+end
+
+--- Where the rider's playermodel has its eyes this frame. The seat's own eye position doesn't follow the rider leaning
+--- over the handlebar, which would put the camera inside their chest when the body is drawn. The bones are set up
+--- once with the head kept to measure this, then again for drawing with the head shrunk away.
+--- @return Vector?
+function bicycle.getRiderEyePosition(player)
+  local eyesAttachment = player:LookupAttachment("eyes")
+
+  if (not eyesAttachment or eyesAttachment <= 0) then
+    return nil
+  end
+
+  player.bicycleKeepHead = true
+  player:InvalidateBoneCache()
+  player:SetupBones()
+
+  local eyes = player:GetAttachment(eyesAttachment)
+
+  player.bicycleKeepHead = nil
+  player:InvalidateBoneCache()
+
+  return eyes and eyes.Pos
 end
 
 local function formatVector(vector)
@@ -93,6 +132,7 @@ end)
 local footView = nil
 local mountedSeat = nil
 local mountedAt = 0
+local isBlendingFromFootView = false
 
 -- The heading, slope and lean the camera follows, trailing the bike's by bicycle_cam_smooth.
 local smoothedBike = nil
@@ -107,6 +147,7 @@ hook.Add("Think", "bicycle.trackFootView", function()
   end
 
   mountedSeat = nil
+  isBlendingFromFootView = false
   smoothedBike = nil
   footView = {
     origin = player:EyePos(),
@@ -137,6 +178,8 @@ local function blendFromFootView(vehicle, cameraView)
     mountedAt = RealTime()
   end
 
+  isBlendingFromFootView = false
+
   local blendTime = bicycle.getClientSetting("cam_mount_blend")
 
   if (blendTime <= 0 or not footView or mountedAt - footView.seenAt > MAX_FOOT_VIEW_AGE) then
@@ -149,9 +192,15 @@ local function blendFromFootView(vehicle, cameraView)
     return
   end
 
+  isBlendingFromFootView = true
   fraction = math.ease.InOutSine(fraction)
   cameraView.origin = LerpVector(fraction, footView.origin, cameraView.origin)
   cameraView.angles = lerpAngleShortest(fraction, footView.angles, cameraView.angles)
+end
+
+--- @return boolean # Whether the local player's camera is still easing into the riding view after getting on
+function bicycle.isBlendingFromFootView()
+  return isBlendingFromFootView
 end
 
 --- Heading, slope pitch and lean are smoothed apart from each other: averaging the bike's angles as a whole mixes the
@@ -194,6 +243,36 @@ local function getRiderLook(bike, vehicle, viewAngles)
   return Angle(eyeAngles.p - forward.p, math.AngleDifference(eyeAngles.y, forward.y), 0)
 end
 
+--- Keeps a look, as pitch and yaw away from straight ahead, within what a neck can turn.
+--- @return Angle
+local function clampBodyLook(look)
+  return Angle(
+    math.Clamp(look.p, BODY_LOOK_MIN_PITCH, BODY_LOOK_MAX_PITCH),
+    math.Clamp(look.y, -BODY_LOOK_MAX_YAW, BODY_LOOK_MAX_YAW),
+    0
+  )
+end
+
+-- A rider that sees their own body can't look behind them, where they'd see their neck and shrunken head. Their eye
+-- angles are relative to the seat, so they're clamped around the seat's straight ahead. Clamping the input itself
+-- rather than just the view means there's no dead zone to turn back through.
+hook.Add("CreateMove", "bicycle.limitBodyLook", function(cmd)
+  local player = LocalPlayer()
+
+  if (not bicycle.isShowingFirstPersonBody(player)) then
+    return
+  end
+
+  local forward = bicycle.getFromSeat(player:GetVehicle()).SeatForwardEyeAngles
+  local viewAngles = cmd:GetViewAngles()
+  local look = Angle(viewAngles.p - forward.p, math.AngleDifference(viewAngles.y, forward.y), 0)
+  local clampedLook = clampBodyLook(look)
+
+  if (clampedLook ~= look) then
+    cmd:SetViewAngles(Angle(forward.p + clampedLook.p, forward.y + clampedLook.y, viewAngles.r))
+  end
+end)
+
 --- The view follows the seat, so it turns, pitches and rolls as abruptly as the bike does. This puts the rider's own
 --- look onto a calmer frame instead: the smoothed heading and slope, with only bicycle_cam_roll of the smoothed lean.
 --- With bicycle_cam_level only the heading is left.
@@ -209,6 +288,12 @@ local function getSmoothedViewAngles(bike, vehicle, viewAngles)
   end
 
   local look = getRiderLook(bike, vehicle, viewAngles)
+
+  -- The input is already limited, this only covers the view being calculated before it.
+  if (bicycle.isShowingFirstPersonBody(LocalPlayer())) then
+    look = clampBodyLook(look)
+  end
+
   local _, smoothedViewAngles = LocalToWorld(vector_origin, look, vector_origin, frame)
 
   return smoothedViewAngles
@@ -229,7 +314,7 @@ hook.Add("CalcVehicleView", "bicycle.camera", function(vehicle, player, view)
     origin = view.origin,
     angles = angles,
     fov = view.fov + fovBoostFraction * bicycle.getClientSetting("cam_fov_boost"),
-    drawviewer = false,
+    drawviewer = bicycle.isShowingFirstPersonBody(player),
   }
 
   if (vehicle:GetThirdPersonMode()) then
@@ -246,6 +331,8 @@ hook.Add("CalcVehicleView", "bicycle.camera", function(vehicle, player, view)
 
     cameraView.origin = trace.HitPos
     cameraView.drawviewer = true
+  elseif (cameraView.drawviewer) then
+    cameraView.origin = bicycle.getRiderEyePosition(player) or cameraView.origin
   end
 
   blendFromFootView(vehicle, cameraView)

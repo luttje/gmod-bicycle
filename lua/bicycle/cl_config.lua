@@ -61,6 +61,13 @@ bicycle.clientSettingSections = {
         decimals = 2,
         description = "Seconds the camera takes to move from your on-foot view to the riding view, 0 is off",
       },
+      {
+        name = "cam_body",
+        label = "Show your body in first person",
+        type = "bool",
+        default = 1,
+        description = "Draw your own playermodel in first person, without its head, so you see your hands and feet",
+      },
     },
   },
   {
