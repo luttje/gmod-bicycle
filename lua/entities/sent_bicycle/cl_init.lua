@@ -326,6 +326,7 @@ end
 function ENT:StopPosingRider()
   if (IsValid(self.posedRider) and self.riderPoseCallback) then
     self.posedRider:RemoveCallback("BuildBonePositions", self.riderPoseCallback)
+    self.posedRider:SetLOD(-1)
   end
 
   self.posedRider = nil
@@ -347,6 +348,9 @@ function ENT:UpdateRiderPose()
   end
 
   self.posedRider = rider
+  -- Lower detail levels leave bones like the toes and fingers out of the bone setup, and the limbs can't be solved
+  -- without them, so the rider would drop back to their plain sitting pose a short way off.
+  rider:SetLOD(0)
   self.riderPoseCallback = rider:AddCallback("BuildBonePositions", function(player)
     -- A dormant bike's Think doesn't run, so it can't unhook itself and its rider may be stale.
     if (IsValid(self) and not self:IsDormant()) then
