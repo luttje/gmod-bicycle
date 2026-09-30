@@ -302,7 +302,8 @@ end
 hook.Add("CalcVehicleView", "bicycle.camera", function(vehicle, player, view)
   local bike = bicycle.getFromSeat(vehicle)
 
-  if (not bike) then
+  -- Looking through something else, like a camera.
+  if (not bike or GetViewEntity() ~= player) then
     return
   end
 
