@@ -247,6 +247,28 @@ bicycle.tuningSections = {
     },
   },
   {
+    name = "Water",
+    settings = {
+      {
+        name = "water_level",
+        label = "Throw off at water level",
+        default = 2,
+        min = 0,
+        max = 3,
+        description = "Water this deep throws the rider off: 1 touching, 2 half under, 3 fully under, 0 never",
+      },
+      {
+        name = "water_drag",
+        label = "Water drag",
+        default = 1.5,
+        min = 0,
+        max = 10,
+        decimals = 2,
+        description = "How hard water slows the bike once the wheels are fully under (1/s)",
+      },
+    },
+  },
+  {
     name = "Mass, parking and the rider",
     settings = {
       {

@@ -39,6 +39,9 @@ local LANDING_PITCH_DAMPING = 12
 local MIN_PEDALLING_CADENCE = 40
 local CADENCE_CHANGE_RATE = 300
 
+-- The highest Entity:WaterLevel, for a bike completely under water.
+local WATER_LEVEL_SUBMERGED = 3
+
 local function getGravity()
   local gravity = physenv.GetGravity():Length()
 
@@ -59,6 +62,14 @@ local function projectOntoPlane(direction, normal)
   projected:Normalize()
 
   return projected
+end
+
+--- The wheel traces go straight through water, so without this a bike would ride along the bottom as if it were dry.
+--- @return boolean
+function ENT:IsTooDeepToRide()
+  local maxWaterLevel = bicycle.getTuning("water_level")
+
+  return maxWaterLevel > 0 and self:WaterLevel() >= maxWaterLevel
 end
 
 --- Parked bikes hold their brakes.
@@ -118,6 +129,8 @@ function ENT:MeasureRide(physics, rider)
     mass = physics:GetMass(),
     massCenter = physics:GetMassCenter(),
     gravity = getGravity(),
+    -- How far the bike is under water, 0-1
+    waterFraction = self:WaterLevel() / WATER_LEVEL_SUBMERGED,
     isRidden = isRidden,
     isCrashed = isCrashed,
     isOnSide = isOnSide,
@@ -247,7 +260,12 @@ function ENT:ApplyPedalsAndBrakes(physics, ride, input, isPedalling, deltaTime)
     acceleration = acceleration - resistance * getDirection(speed)
   end
 
-  physics:AddVelocity(ride.forwardAlongGround * (acceleration * deltaTime))
+  -- Wading slows the bike whatever the rider does. Taking a fraction of the speed never turns the bike around.
+  local newSpeed = speed + acceleration * deltaTime
+  local waterSlowdown = newSpeed
+      * getBlendFraction(bicycle.getTuning("water_drag") * ride.waterFraction, deltaTime)
+
+  physics:AddVelocity(ride.forwardAlongGround * (newSpeed - waterSlowdown - speed))
 end
 
 function ENT:TryBunnyHop(physics, ride)
@@ -396,6 +414,11 @@ function ENT:PhysicsSimulate(physics, deltaTime)
   if (ride.isRidden and not ride.isCrashed and not self.isPhysgunHeld
         and (math.abs(ride.lean) > bicycle.getTuning("crash_lean") or math.abs(ride.pitch) > bicycle.getTuning("crash_pitch"))) then
     self.hasPendingCrash = true
+  end
+
+  if (ride.isRidden and not ride.isCrashed and self:IsTooDeepToRide()) then
+    self.hasPendingCrash = true
+    self.isCrashingIntoWater = true
   end
 
   -- Decided before the tyres are sprung, since a wheelie changes where they push.

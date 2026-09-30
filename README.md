@@ -36,6 +36,10 @@ Knocked the bike over? Press **E** on it and it stands back up when you get on.
 > [!HINT]
 > Hitting something hard enough will throw you over the handlebars.
 
+> [!HINT]
+> Water slows you down, and riding in until the bike is half under throws you off. Server admins can change both, or turn
+> the throwing off, under **Water** in the server settings.
+
 ## Settings
 Open the spawn menu and go to **Options → Bicycle**. Changes apply straight away, so you can tweak things while riding.
 
@@ -130,8 +134,9 @@ end)
 ```
 
 ### Crashing
-`BicycleShouldCrash` runs when a bike hits something hard enough or tips too far. Return `false` to keep the rider on the
-bike. While the bike stays tipped over, this runs every tick, so keep it cheap:
+`BicycleShouldCrash` runs when a bike hits something hard enough, tips too far or rides into water that's too deep.
+Return `false` to keep the rider on the bike. While the bike stays tipped over or in deep water, this runs every tick,
+so keep it cheap:
 
 ```lua
 --- @param bike Entity The bike

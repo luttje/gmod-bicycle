@@ -298,6 +298,11 @@ function ENT:Use(activator)
     return
   end
 
+  -- The rider would be thrown straight back off.
+  if (self:IsTooDeepToRide()) then
+    return
+  end
+
   if (not IsValid(self:GetSeat())) then
     self:CreateSeat()
   end
@@ -547,7 +552,8 @@ function ENT:OnRiderLeave(player)
   end)
 end
 
-function ENT:Crash()
+--- @param isIntoWater? boolean Whether the rider rode into water too deep to ride through
+function ENT:Crash(isIntoWater)
   if (self:GetCrashed()) then
     return
   end
@@ -560,7 +566,12 @@ function ENT:Crash()
   end
 
   self:SetCrashed(true)
-  self:EmitSound("physics/metal/metal_box_impact_hard" .. math.random(1, 3) .. ".wav", 75, math.random(95, 110))
+
+  if (isIntoWater) then
+    self:EmitSound("ambient/water/water_splash" .. math.random(1, 3) .. ".wav", 75, math.random(95, 110))
+  else
+    self:EmitSound("physics/metal/metal_box_impact_hard" .. math.random(1, 3) .. ".wav", 75, math.random(95, 110))
+  end
 
   if (IsValid(rider)) then
     self.isEjectingFromCrash = true
@@ -594,8 +605,11 @@ end
 
 function ENT:HandlePendingImpacts()
   if (self.hasPendingCrash) then
+    local isIntoWater = self.isCrashingIntoWater == true
+
     self.hasPendingCrash = nil
-    self:Crash()
+    self.isCrashingIntoWater = nil
+    self:Crash(isIntoWater)
   end
 
   local impactSpeed = self.pendingImpactSoundSpeed
