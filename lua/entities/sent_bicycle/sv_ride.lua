@@ -42,6 +42,15 @@ local CADENCE_CHANGE_RATE = 300
 -- The highest Entity:WaterLevel, for a bike completely under water.
 local WATER_LEVEL_SUBMERGED = 3
 
+-- Braking skids from this speed and is at its loudest from the full speed (u/s).
+local BRAKE_SKID_MIN_SPEED = 60
+local BRAKE_SKID_FULL_SPEED = 400
+-- Sliding sideways skids from this side speed and is at its loudest from the full side speed (u/s).
+local SLIDE_SKID_MIN_SPEED = 40
+local SLIDE_SKID_FULL_SPEED = 250
+-- The skid is networked in steps of this size, so it doesn't send a new value every tick.
+local SKID_NETWORK_STEP = 0.05
+
 local function getGravity()
   local gravity = physenv.GetGravity():Length()
 
@@ -78,6 +87,7 @@ end
 function ENT:ReadRiderInput(rider)
   if (not IsValid(rider)) then
     self.wasJumpHeld = false
+    self.wasBellHeld = false
 
     return {
       isPedalHeld = false,
@@ -86,12 +96,17 @@ function ENT:ReadRiderInput(rider)
       isSprintHeld = false,
       isHopPressed = false,
       isWheelieHeld = false,
+      isBellPressed = false,
     }
   end
 
   local isJumpHeld = rider:KeyDown(IN_JUMP)
   local isHopPressed = isJumpHeld and not self.wasJumpHeld
   self.wasJumpHeld = isJumpHeld
+
+  local isBellHeld = rider:KeyDown(IN_RELOAD)
+  local isBellPressed = isBellHeld and not self.wasBellHeld
+  self.wasBellHeld = isBellHeld
 
   return {
     isPedalHeld = rider:KeyDown(IN_FORWARD),
@@ -100,6 +115,7 @@ function ENT:ReadRiderInput(rider)
     isSprintHeld = rider:KeyDown(IN_SPEED),
     isHopPressed = isHopPressed,
     isWheelieHeld = rider:KeyDown(IN_ATTACK2),
+    isBellPressed = isBellPressed,
   }
 end
 
@@ -277,6 +293,8 @@ function ENT:TryBunnyHop(physics, ride)
 
   physics:AddVelocity(ride.groundNormal * bicycle.getTuning("hop"))
   physics:AddAngleVelocity(physics:WorldToLocalVector(ride.right * HOP_PITCH_SPEED))
+
+  self.hasPendingHopSound = true
 end
 
 --- Removes sideways slip, but never faster than tyre friction allows, so the bike can still slide.
@@ -290,6 +308,33 @@ function ENT:ApplyTyreGrip(physics, ride, deltaTime)
   )
 
   physics:AddVelocity(ride.sideAlongGround * speedChange)
+
+  ride.sideSpeed = sideSpeed
+end
+
+--- @return number # How hard the tyres skid, 0-1
+function ENT:GetSkidAmount(ride, input)
+  if (ride.groundedCount == 0 or not ride.isRidden) then
+    return 0
+  end
+
+  local slideSkid = math.Clamp(
+    (math.abs(ride.sideSpeed) - SLIDE_SKID_MIN_SPEED) / (SLIDE_SKID_FULL_SPEED - SLIDE_SKID_MIN_SPEED),
+    0,
+    1
+  )
+  local brakeSkid = 0
+
+  -- Below REVERSE_BELOW_SPEED the brake walks the bike backwards instead.
+  if (input.isBrakeHeld and ride.speed >= REVERSE_BELOW_SPEED) then
+    brakeSkid = math.Clamp(
+      (ride.absoluteSpeed - BRAKE_SKID_MIN_SPEED) / (BRAKE_SKID_FULL_SPEED - BRAKE_SKID_MIN_SPEED),
+      0,
+      1
+    )
+  end
+
+  return math.max(slideSkid, brakeSkid)
 end
 
 --- Only corners as hard as the current lean supports (plus bicycle_lean_slack), so the bike leans in first and then
@@ -433,6 +478,10 @@ function ENT:PhysicsSimulate(physics, deltaTime)
   local steerAngle = self:UpdateSteering(input.steerDirection, ride.absoluteSpeed, deltaTime)
   local isPedalling = input.isPedalHeld and ride.isRearGrounded
 
+  if (input.isBellPressed) then
+    self.hasPendingBell = true
+  end
+
   if (ride.groundedCount > 0) then
     self:ApplyPedalsAndBrakes(physics, ride, input, isPedalling, deltaTime)
 
@@ -450,6 +499,7 @@ function ENT:PhysicsSimulate(physics, deltaTime)
   end
 
   self:UpdateNetworkedVisuals(ride.absoluteSpeed, isPedalling, steerAngle, targetLean, deltaTime)
+  self:SetSkid(math.Round(self:GetSkidAmount(ride, input) / SKID_NETWORK_STEP) * SKID_NETWORK_STEP)
 
   return vector_origin, vector_origin, SIM_NOTHING
 end

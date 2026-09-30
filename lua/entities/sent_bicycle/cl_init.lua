@@ -75,9 +75,45 @@ local EDITOR_MARKER_RADIUS = 1.2
 -- Length of the line showing the tilt of the rider's back.
 local EDITOR_SPINE_LENGTH = 12
 
+-- Looping sounds fade towards their volume at this rate (1/s), and stop once quieter than the silent volume.
+local LOOP_VOLUME_RESPONSE = 8
+local LOOP_SILENT_VOLUME = 0.01
+-- The freewheel ticks while coasting, faster (higher pitch) the faster the wheel turns. Speeds in u/s.
+local FREEWHEEL_MIN_SPEED = 20
+local FREEWHEEL_FULL_SPEED = 540
+local FREEWHEEL_PITCH_MIN = 60
+local FREEWHEEL_PITCH_MAX = 160
+local FREEWHEEL_VOLUME_MIN = 0.1
+local FREEWHEEL_VOLUME_MAX = 0.5
+-- The chain runs while pedalling, higher pitched the faster the cranks turn. Cadences in rpm.
+local CHAIN_MIN_CADENCE = 40
+local CHAIN_FULL_CADENCE = 120
+local CHAIN_PITCH_MIN = 85
+local CHAIN_PITCH_MAX = 125
+local CHAIN_VOLUME_MIN = 0.8
+local CHAIN_VOLUME_MAX = 2
+local SKID_PITCH_MIN = 90
+local SKID_PITCH_MAX = 110
+local SKID_FULL_PITCH_SPEED = 400
+-- Only the rider hears the wind, from the min speed up to its loudest at the full speed.
+local WIND_MIN_SPEED = 150
+local WIND_FULL_SPEED = 700
+local WIND_PITCH_MIN = 80
+local WIND_PITCH_MAX = 130
+local WIND_VOLUME_MAX = 1
+
+local SOUND_LOOPS = {
+  freewheel = { path = "bicycle/freewheel_ticking.wav", soundLevel = 65 },
+  chain = { path = "bicycle/chain_loop.wav", soundLevel = 65 },
+  skid = { path = "bicycle/skid.wav", soundLevel = 75 },
+  wind = { path = "bicycle/wind.wav", soundLevel = 0 },
+}
+
 function ENT:Initialize()
   self.wheelSpinAngle = 0
   self.crankAngle = 0
+  self.soundLoops = {}
+  self.soundLoopVolumes = {}
 end
 
 --- The server measures the model on spawn, clients take over its measurements once they arrive.
@@ -295,6 +331,110 @@ function ENT:UpdateDebugWheelContacts()
   end
 end
 
+--- Fades the loop towards `volume`, starting it when it becomes audible and stopping it once silent.
+function ENT:UpdateSoundLoop(name, volume, pitch, deltaTime)
+  local currentVolume = Lerp(
+    1 - math.exp(-LOOP_VOLUME_RESPONSE * deltaTime),
+    self.soundLoopVolumes[name] or 0,
+    volume
+  )
+  local loop = self.soundLoops[name]
+
+  self.soundLoopVolumes[name] = currentVolume
+
+  if (currentVolume < LOOP_SILENT_VOLUME) then
+    if (loop and loop:IsPlaying()) then
+      loop:Stop()
+    end
+
+    return
+  end
+
+  if (not loop) then
+    local settings = SOUND_LOOPS[name]
+
+    loop = CreateSound(self, settings.path)
+    loop:SetSoundLevel(settings.soundLevel)
+    self.soundLoops[name] = loop
+  end
+
+  if (loop:IsPlaying()) then
+    loop:ChangeVolume(currentVolume)
+    loop:ChangePitch(pitch)
+  else
+    loop:PlayEx(currentVolume, pitch)
+  end
+end
+
+function ENT:UpdateSoundLoops(deltaTime)
+  local absoluteSpeed = math.abs(self:GetForwardSpeed())
+  local isEnabled = bicycle.getTuningBool("sounds")
+  local ridingVolume = isEnabled and bicycle.getClientSetting("sound_volume") or 0
+  local windVolume = isEnabled and bicycle.getClientSetting("sound_wind") or 0
+
+  -- Pedalling drives the hub, which silences the freewheel.
+  local freewheelFraction = math.Clamp(
+    (absoluteSpeed - FREEWHEEL_MIN_SPEED) / (FREEWHEEL_FULL_SPEED - FREEWHEEL_MIN_SPEED),
+    0,
+    1
+  )
+  local isCoasting = self:GetCadence() == 0 and absoluteSpeed > FREEWHEEL_MIN_SPEED
+
+  self:UpdateSoundLoop(
+    "freewheel",
+    isCoasting and Lerp(freewheelFraction, FREEWHEEL_VOLUME_MIN, FREEWHEEL_VOLUME_MAX) * ridingVolume or 0,
+    Lerp(freewheelFraction, FREEWHEEL_PITCH_MIN, FREEWHEEL_PITCH_MAX),
+    deltaTime
+  )
+
+  local cadence = self:GetCadence()
+  local chainFraction = math.Clamp(
+    (cadence - CHAIN_MIN_CADENCE) / (CHAIN_FULL_CADENCE - CHAIN_MIN_CADENCE),
+    0,
+    1
+  )
+
+  self:UpdateSoundLoop(
+    "chain",
+    cadence > 0 and Lerp(chainFraction, CHAIN_VOLUME_MIN, CHAIN_VOLUME_MAX) * ridingVolume or 0,
+    Lerp(chainFraction, CHAIN_PITCH_MIN, CHAIN_PITCH_MAX),
+    deltaTime
+  )
+
+  self:UpdateSoundLoop(
+    "skid",
+    self:GetSkid() * ridingVolume,
+    Lerp(math.Clamp(absoluteSpeed / SKID_FULL_PITCH_SPEED, 0, 1), SKID_PITCH_MIN, SKID_PITCH_MAX),
+    deltaTime
+  )
+
+  local windFraction = 0
+  local rider = self:GetRider()
+
+  if (IsValid(rider) and rider == LocalPlayer()) then
+    windFraction = math.Clamp(
+      (self:GetVelocity():Length() - WIND_MIN_SPEED) / (WIND_FULL_SPEED - WIND_MIN_SPEED),
+      0,
+      1
+    )
+  end
+
+  self:UpdateSoundLoop(
+    "wind",
+    windFraction * WIND_VOLUME_MAX * windVolume,
+    Lerp(windFraction, WIND_PITCH_MIN, WIND_PITCH_MAX),
+    deltaTime
+  )
+end
+
+--- Also called when the bike leaves the player's view, since Think stops running and would leave the loops playing.
+function ENT:StopSoundLoops()
+  for name, loop in pairs(self.soundLoops) do
+    loop:Stop()
+    self.soundLoopVolumes[name] = 0
+  end
+end
+
 function ENT:Think()
   local deltaTime = FrameTime()
 
@@ -306,6 +446,7 @@ function ENT:Think()
   self:UpdateBones()
   self:UpdateRiderPose()
   self:UpdateDebugWheelContacts()
+  self:UpdateSoundLoops(deltaTime)
 
   self:SetNextClientThink(CurTime())
   return true
@@ -313,6 +454,7 @@ end
 
 function ENT:OnRemove()
   self:StopPosingRider()
+  self:StopSoundLoops()
 end
 
 --- Draws the wheels as the ride simulates them, with their spin and steering and where they touch the ground, to

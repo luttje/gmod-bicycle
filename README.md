@@ -30,6 +30,7 @@ Knocked the bike over? Press **E** on it and it stands back up when you get on.
 | Shift | Sprint |
 | Space | Bunny hop |
 | Right mouse (hold) | Wheelie |
+| R | Ring the bell |
 | Ctrl | Switch between first and third person |
 | E | Get off |
 
@@ -43,10 +44,11 @@ Knocked the bike over? Press **E** on it and it stands back up when you get on.
 ## Settings
 Open the spawn menu and go to **Options → Bicycle**. Changes apply straight away, so you can tweak things while riding.
 
-- **Client** is just for you: camera distance and height, camera roll, speedometer units (km/h, mph or off) and how
-  your character sits on the bike. These are saved.
+- **Client** is just for you: camera distance and height, camera roll, speedometer units (km/h, mph or off), how
+  your character sits on the bike and the volume of the riding sounds and wind. These are saved.
 - **Server** changes how every bike on the server rides: top speed, acceleration, steering, grip, suspension and more.
-  Only the host or an admin can change these, and they reset to the defaults every time the server restarts.
+  Only the host or an admin can change these, and they reset to the defaults every time the server restarts. Admins can
+  also turn all bike sounds off, or just the bell, or give the bell a cooldown under **Sounds**.
 
 > [!HINT]
 > If you modify any server ConVars and want to automatically persist them in `cfg/server.vdf`: run the command `host_writeconfig_lua` in the server console (or add the relevant ConVars to your `cfg/server.cfg` file)
@@ -170,6 +172,21 @@ in a server-side plugin or schema file:
 ```lua
 hook.Add("BicycleRiderCrashed", "myschema.bicycleKnockout", function(client, bike, velocity)
   client:SetRagdolled(true, 10)
+end)
+```
+
+### Bell
+`BicycleCanRingBell` runs when a rider presses **R** to ring the bell, after the server's **Sounds** settings allow
+it. Return `false` to keep the bell silent:
+
+```lua
+--- @param bike Entity The bike
+--- @param rider Player The rider ringing the bell
+--- @return boolean? Return false to keep the bell from ringing
+hook.Add("BicycleCanRingBell", "myaddon.quietBell", function(bike, rider)
+  if (rider:Team() == TEAM_MUTED) then
+    return false
+  end
 end)
 ```
 

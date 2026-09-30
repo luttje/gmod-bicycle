@@ -57,6 +57,8 @@ function ENT:SetupDataTables()
   self:NetworkVar("Float", "Cadence")
   -- Degrees, positive is right.
   self:NetworkVar("Float", "TargetLean")
+  -- How hard the tyres skid from braking or sliding sideways, 0-1. Only drives the skid sound.
+  self:NetworkVar("Float", "Skid")
   self:NetworkVar("Bool", "Crashed")
   -- Measured by the server from the model.
   self:NetworkVar("Float", "WheelRadius")

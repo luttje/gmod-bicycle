@@ -269,6 +269,34 @@ bicycle.tuningSections = {
     },
   },
   {
+    name = "Sounds",
+    settings = {
+      {
+        name = "sounds",
+        label = "Enable sounds",
+        type = "bool",
+        default = 1,
+        description = "Play the bike's sounds: bell, chain, freewheel, skids, wind, hops, impacts and crashes",
+      },
+      {
+        name = "bell",
+        label = "Allow the bell",
+        type = "bool",
+        default = 1,
+        description = "Let riders ring the bell with the reload key",
+      },
+      {
+        name = "bell_cooldown",
+        label = "Bell cooldown",
+        default = 0.15,
+        min = 0,
+        max = 10,
+        decimals = 2,
+        description = "Seconds before a rider can ring the bell again",
+      },
+    },
+  },
+  {
     name = "Mass, parking and the rider",
     settings = {
       {

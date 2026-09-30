@@ -125,6 +125,29 @@ bicycle.clientSettingSections = {
     },
   },
   {
+    name = "Sound",
+    settings = {
+      {
+        name = "sound_volume",
+        label = "Riding sounds volume",
+        default = 1,
+        min = 0,
+        max = 1,
+        decimals = 2,
+        description = "Volume of every bike's chain, freewheel ticking and tyre skid (0-1)",
+      },
+      {
+        name = "sound_wind",
+        label = "Wind volume",
+        default = 1,
+        min = 0,
+        max = 1,
+        decimals = 2,
+        description = "Volume of the wind you hear while riding fast (0-1), 0 is off",
+      },
+    },
+  },
+  {
     name = "Debug",
     settings = {
       {

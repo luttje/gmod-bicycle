@@ -107,7 +107,9 @@ function ENT:Initialize()
 
   self.steerFraction = 0
   self.wasJumpHeld = false
+  self.wasBellHeld = false
   self.nextHopAt = 0
+  self.nextBellAt = 0
   self.nextImpactSoundAt = 0
   self.sprintLeanFraction = 0
   self.wheelieLeanFraction = 0
@@ -568,14 +570,21 @@ function ENT:Crash(isIntoWater)
   self:SetCrashed(true)
 
   if (isIntoWater) then
-    self:EmitSound("ambient/water/water_splash" .. math.random(1, 3) .. ".wav", 75, math.random(95, 110))
+    self:EmitBicycleSound("ambient/water/water_splash" .. math.random(1, 3) .. ".wav", 75, math.random(95, 110))
   else
-    self:EmitSound("physics/metal/metal_box_impact_hard" .. math.random(1, 3) .. ".wav", 75, math.random(95, 110))
+    self:EmitBicycleSound("physics/metal/metal_box_impact_hard" .. math.random(1, 3) .. ".wav", 75, math.random(95, 110))
   end
 
   if (IsValid(rider)) then
     self.isEjectingFromCrash = true
     rider:ExitVehicle()
+  end
+end
+
+--- Plays nothing while the server has turned bike sounds off.
+function ENT:EmitBicycleSound(...)
+  if (bicycle.getTuningBool("sounds")) then
+    self:EmitSound(...)
   end
 end
 
@@ -616,13 +625,42 @@ function ENT:HandlePendingImpacts()
 
   if (impactSpeed) then
     self.pendingImpactSoundSpeed = nil
-    self:EmitSound(
+    self:EmitBicycleSound(
       "physics/metal/metal_solid_impact_soft" .. math.random(1, 3) .. ".wav",
       70,
       100,
       math.Clamp(impactSpeed / 500, 0.2, 1)
     )
   end
+end
+
+--- The ride only records these sounds, since it runs inside the physics step.
+function ENT:HandlePendingSounds()
+  if (self.hasPendingHopSound) then
+    self.hasPendingHopSound = nil
+    self:EmitBicycleSound("bicycle/frame_creak.wav", 70, math.random(95, 105))
+  end
+
+  if (self.hasPendingBell) then
+    self.hasPendingBell = nil
+    self:TryRingBell()
+  end
+end
+
+function ENT:TryRingBell()
+  local rider = self:GetRider()
+
+  if (not IsValid(rider) or not bicycle.getTuningBool("bell") or self.nextBellAt > CurTime()) then
+    return
+  end
+
+  -- Lets gamemodes silence the bell, such as for a team or in a quiet zone.
+  if (hook.Run("BicycleCanRingBell", self, rider) == false) then
+    return
+  end
+
+  self.nextBellAt = CurTime() + bicycle.getTuning("bell_cooldown")
+  self:EmitBicycleSound("bicycle/bell.wav", 80, math.random(98, 102))
 end
 
 --- Catches riders that left without PlayerLeaveVehicle, such as by dying.
@@ -689,6 +727,7 @@ end
 
 function ENT:Think()
   self:HandlePendingImpacts()
+  self:HandlePendingSounds()
   self:ValidateRider()
   self:UpdateSeatPose()
 

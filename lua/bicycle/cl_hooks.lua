@@ -22,7 +22,7 @@ local DEBUG_PANEL_BACKGROUND = Color(0, 0, 0, 170)
 local CONTROL_HINTS = {
   "W pedal   S brake/back   A/D steer",
   "SHIFT sprint   SPACE hop   MOUSE2 wheelie",
-  "CTRL camera   E get off",
+  "CTRL camera   R bell   E get off",
 }
 
 local function getLocalPlayerBicycle()
@@ -113,6 +113,13 @@ hook.Add("Think", "bicycle.trackFootView", function()
     angles = player:EyeAngles(),
     seenAt = RealTime(),
   }
+end)
+
+-- A bike's Think stops once it leaves the player's view, so its looping sounds would keep playing.
+hook.Add("NotifyShouldTransmit", "bicycle.stopSoundLoops", function(entity, shouldTransmit)
+  if (not shouldTransmit and entity.IsBicycle and entity.soundLoops) then
+    entity:StopSoundLoops()
+  end
 end)
 
 local function lerpAngleShortest(fraction, from, to)
