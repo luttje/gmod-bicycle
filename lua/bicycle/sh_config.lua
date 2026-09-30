@@ -252,7 +252,7 @@ bicycle.tuningSections = {
       {
         name = "water_level",
         label = "Throw off at water level",
-        default = 2,
+        default = 3,
         min = 0,
         max = 3,
         description = "Water this deep throws the rider off: 1 touching, 2 half under, 3 fully under, 0 never",
