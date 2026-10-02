@@ -25,10 +25,23 @@ local LEAN_GAUGE_MARKERS = { -45, 0, 45 }
 local DEBUG_PANEL_LINE_HEIGHT = 14
 local DEBUG_PANEL_BACKGROUND = Color(0, 0, 0, 170)
 local CONTROL_HINTS = {
-  "W pedal   S brake/back   A/D steer",
-  "SHIFT sprint   SPACE hop   MOUSE2 wheelie",
-  "MOUSE1 lean forward (brake to stoppie)",
-  "CTRL camera   R bell   E get off",
+  "W: pedal",
+  "S: brake/back",
+  "A/D: steer",
+  "SHIFT: sprint",
+  "SPACE: hop",
+  "MOUSE1: lean forward (brake to stoppie)",
+  "MOUSE2: wheelie",
+  "R: bell",
+  "E: get off",
+  "",
+  "Tricks: ",
+  "• MOUSE1 + A/D tailwhip (requires air)",
+  "• MOUSE2 + A/D barspin (requires air or wheelie)",
+  "• double-tap S/W backflip/front flip (requires air)",
+  "• CTRL + W no-hander, CTRL + S no-footer (requires air)",
+  "• CTRL + A/D can-can (requires air)",
+  "• MOUSE2 + W X-up (requires air or wheelie)",
 }
 
 local function getLocalPlayerBicycle()
@@ -50,7 +63,7 @@ function bicycle.isShowingFirstPersonBody(player)
 
   local vehicle = player:GetVehicle()
 
-  return bicycle.getFromSeat(vehicle) ~= nil and not vehicle:GetThirdPersonMode()
+  return bicycle.getFromSeat(vehicle) ~= nil and not bicycle.getClientSettingBool("cam_third_person")
 end
 
 --- Where the rider's playermodel has its eyes this frame. The seat's own eye position doesn't follow the rider leaning
@@ -139,6 +152,8 @@ local isBlendingFromFootView = false
 local smoothedBike = nil
 local smoothedHeading = { pitch = 0, yaw = 0, lean = 0 }
 local smoothedFrame = -1
+-- The rider's look from before a flip, held until it lands.
+local heldRiderLook = nil
 
 hook.Add("Think", "bicycle.trackFootView", function()
   local player = LocalPlayer()
@@ -150,6 +165,7 @@ hook.Add("Think", "bicycle.trackFootView", function()
   mountedSeat = nil
   isBlendingFromFootView = false
   smoothedBike = nil
+  heldRiderLook = nil
   footView = {
     origin = player:EyePos(),
     angles = player:EyeAngles(),
@@ -207,6 +223,12 @@ end
 --- Heading, slope pitch and lean are smoothed apart from each other: averaging the bike's angles as a whole mixes the
 --- lean into pitch and yaw while leaned over, which makes the camera wobble through a turn.
 local function updateSmoothedHeading(bike)
+  -- A flip turns the bike's forward over the top, which would swing the heading round. The camera holds still until
+  -- the trick lands instead, then catches up.
+  if (smoothedBike == bike and bike:IsRotatingTrick()) then
+    return
+  end
+
   local forward = bike:GetForward()
   local forwardAngles = forward:Angle()
   local lean = bike:GetLean()
@@ -288,7 +310,14 @@ local function getSmoothedViewAngles(bike, vehicle, viewAngles)
     frame.r = smoothedHeading.lean * bicycle.getClientSetting("cam_roll")
   end
 
-  local look = getRiderLook(bike, vehicle, viewAngles)
+  -- Mid-flip the seat turns over, and the look read back from it jumps between equivalent angles, which wobbles the
+  -- camera. The look from before the flip is held until it lands instead.
+  local look = heldRiderLook
+
+  if (not look or not bike:IsRotatingTrick()) then
+    look = getRiderLook(bike, vehicle, viewAngles)
+    heldRiderLook = look
+  end
 
   -- The input is already limited, this only covers the view being calculated before it.
   if (bicycle.isShowingFirstPersonBody(LocalPlayer())) then
@@ -319,7 +348,8 @@ hook.Add("CalcVehicleView", "bicycle.camera", function(vehicle, player, view)
     drawviewer = bicycle.isShowingFirstPersonBody(player),
   }
 
-  if (vehicle:GetThirdPersonMode()) then
+  -- Not the vehicle's own third person mode, which GMod toggles with Ctrl: that's the trick button here.
+  if (bicycle.getClientSettingBool("cam_third_person")) then
     local pivot = bike:GetPos() + vector_up * bicycle.getClientSetting("cam_height")
     local distance = bicycle.getClientSetting("cam_dist") * (1 + vehicle:GetCameraDistance())
     local trace = util.TraceHull({
@@ -371,21 +401,40 @@ end
 local function drawDebugPanel(bike, speed)
   local wheelContacts = bike.debugWheelContacts or {}
   local lines = {
-    string.format("speed    %5.0f u/s", speed),
-    string.format("lean     %5.1f   target %5.1f", bike:GetLean(), bike:GetTargetLean()),
-    string.format("steer    %5.1f deg", bike:GetSteer()),
-    string.format("cadence  %5.0f rpm", bike:GetCadence()),
-    string.format("rear %s   front %s", describeWheelContact(wheelContacts[1]), describeWheelContact(wheelContacts[2])),
+    string.format("%-8s %5.0f u/s", "speed", speed),
+    string.format(
+      "%-12s %5.1f    %-6s %5.1f",
+      "lean", bike:GetLean(),
+      "target", bike:GetTargetLean()
+    ),
+    string.format("%-8s %5.1f deg", "steer", bike:GetSteer()),
+    string.format("%-8s %5.0f rpm", "cadence", bike:GetCadence()),
+    string.format(
+      "%-8s %-12s %-6s %s",
+      "rear", describeWheelContact(wheelContacts[1]),
+      "front", describeWheelContact(wheelContacts[2])
+    ),
     "",
   }
 
+  local longestLineLength = 0
+  local longestLineText = ""
+
   for _, hint in ipairs(CONTROL_HINTS) do
     lines[#lines + 1] = hint
+
+    if (#hint > longestLineLength) then
+      longestLineLength = #hint
+      longestLineText = hint
+    end
   end
 
   local x, y = 24, ScrH() * 0.45
 
-  draw.RoundedBox(4, x - 10, y - 10, 290, #lines * DEBUG_PANEL_LINE_HEIGHT + 20, DEBUG_PANEL_BACKGROUND)
+  surface.SetFont("BudgetLabel")
+  local width = surface.GetTextSize(longestLineText) + 20
+
+  draw.RoundedBox(4, x - 10, y - 10, width, #lines * DEBUG_PANEL_LINE_HEIGHT + 20, DEBUG_PANEL_BACKGROUND)
 
   for index, line in ipairs(lines) do
     draw.SimpleText(line, "BudgetLabel", x, y + (index - 1) * DEBUG_PANEL_LINE_HEIGHT, color_white)

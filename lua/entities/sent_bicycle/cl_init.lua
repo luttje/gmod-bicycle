@@ -11,6 +11,7 @@ local RIDER_LEGS = {
     foot = "ValveBiped.Bip01_L_Foot",
     toe = "ValveBiped.Bip01_L_Toe0",
     pedalAttachment = "pedal_L",
+    pedalBone = "pedal_L",
     -- The left pedal is at the top at crank angle 0, the right one half a turn on.
     crankOffset = 0,
   },
@@ -21,6 +22,7 @@ local RIDER_LEGS = {
     foot = "ValveBiped.Bip01_R_Foot",
     toe = "ValveBiped.Bip01_R_Toe0",
     pedalAttachment = "pedal_R",
+    pedalBone = "pedal_R",
     crankOffset = math.pi,
   },
 }
@@ -32,6 +34,7 @@ local RIDER_ARMS = {
     hand = "ValveBiped.Bip01_L_Hand",
     finger = "ValveBiped.Bip01_L_Finger2",
     gripAttachment = "grip_L",
+    gripBone = "att_grip_L",
   },
   {
     side = -1,
@@ -40,6 +43,7 @@ local RIDER_ARMS = {
     hand = "ValveBiped.Bip01_R_Hand",
     finger = "ValveBiped.Bip01_R_Finger2",
     gripAttachment = "grip_R",
+    gripBone = "att_grip_R",
   },
 }
 
@@ -66,6 +70,12 @@ local ANIMATED_BONES = {
   leftPedal = "pedal_L",
   rightPedal = "pedal_R",
 }
+
+-- Trick spins arrive at the tick rate, so they're drawn spinning on at the networked speed and pulled towards the
+-- networked angle at this rate (1/s), settling once this close (deg).
+local TRICK_DISPLAY_RESPONSE = 20
+local TRICK_DISPLAY_EPSILON = 0.1
+local STEERING_AXIS_DEBUG_LENGTH = 30
 
 -- Attachments shown by the debug overlay: the seat and the hand and foot targets.
 local DEBUG_ATTACHMENTS = { "seat", "grip_L", "grip_R", "pedal_L", "pedal_R" }
@@ -119,6 +129,11 @@ function ENT:Initialize()
   self.crankAngle = 0
   self.soundLoops = {}
   self.soundLoopVolumes = {}
+  self.trickAngles = {}
+  self.restTargetPositions = {}
+  self.trickPoseCallback = self:AddCallback("BuildBonePositions", function(entity)
+    entity:PoseTricks()
+  end)
 end
 
 --- The server measures the model on spawn, clients take over its measurements once they arrive.
@@ -150,6 +165,112 @@ function ENT:GetAnimatedBones()
   self.animatedBones = bones
 
   return bones
+end
+
+--- @return Vector?, Vector? # A point on the steering axis and the axis itself pointing up out of the head tube, in
+--- world space. Nil when the model has no fork bone.
+function ENT:GetSteeringAxis()
+  local fork = self:GetAnimatedBones().fork
+  local matrix = fork and self:GetBoneMatrix(fork)
+
+  if (not matrix) then
+    return nil, nil
+  end
+
+  -- The fork turns around its own local Y axis, which a VMatrix gives as minus its right.
+  local axis = -matrix:GetRight()
+  axis:Normalize()
+
+  -- Pointing up, so turning around it by positive degrees is counter-clockwise seen from above.
+  if (axis:Dot(self:GetUp()) < 0) then
+    axis:Mul(-1)
+  end
+
+  return matrix:GetTranslation(), axis
+end
+
+--- @return number[] # The fork and everything it carries
+function ENT:GetForkBones()
+  local fork = self:GetAnimatedBones().fork
+
+  if (not fork) then
+    return {}
+  end
+
+  local bones = { fork }
+  table.Add(bones, bicycle.ik.getDescendants(self, fork))
+
+  return bones
+end
+
+--- @return boolean # Whether any trick is drawn spun
+function ENT:IsDoingTrick()
+  return next(self.trickAngles) ~= nil
+end
+
+--- @return boolean # Whether a trick that turns the real bike over, such as a flip, is in progress
+function ENT:IsRotatingTrick()
+  for id in pairs(self.trickAngles) do
+    local trick = bicycle.trick.get(id)
+
+    if (trick and trick.rotatesBike) then
+      return true
+    end
+  end
+
+  return false
+end
+
+--- @return table # The directions tricks pose the bike and rider by, see TRICK:PoseBike. The steering pivot and axis
+--- are nil when the model has no fork bone.
+function ENT:GetTrickFrame()
+  local angles = self:GetAngles()
+  local steeringPivot, steeringAxis = self:GetSteeringAxis()
+
+  return {
+    forward = angles:Forward(),
+    left = -angles:Right(),
+    up = angles:Up(),
+    steeringPivot = steeringPivot,
+    steeringAxis = steeringAxis,
+  }
+end
+
+--- @return Vector?
+function ENT:GetBoneWorldPosition(boneName)
+  return bicycle.ik.getBonePosition(self, self:LookupBone(boneName))
+end
+
+--- Lets every trick being spun move the bike's bones. Runs inside the bike's own
+--- "BuildBonePositions".
+function ENT:PoseTricks()
+  if (not self:IsDoingTrick()) then
+    return
+  end
+
+  bicycle.ik.beginPass(self)
+
+  for _, leg in ipairs(RIDER_LEGS) do
+    self.restTargetPositions[leg.pedalBone] = self:GetBoneWorldPosition(leg.pedalBone)
+  end
+
+  for _, arm in ipairs(RIDER_ARMS) do
+    self.restTargetPositions[arm.gripBone] = self:GetBoneWorldPosition(arm.gripBone)
+  end
+
+  local frame = self:GetTrickFrame()
+
+  if (not frame.steeringPivot) then
+    return
+  end
+
+  for _, trick in ipairs(bicycle.trick.getAll()) do
+    local angle = self.trickAngles[trick.id]
+
+    if (angle) then
+      trick:PoseBike(self, angle, frame)
+    end
+  end
 end
 
 local function setBonePitch(entity, bone, pitch)
@@ -194,28 +315,45 @@ function ENT:GetAttachmentPosition(attachmentName)
   return attachment and attachment.Pos
 end
 
+--- While a trick is spun, the position of the attachment's bone before any trick moved it. That way the rider's hands
+--- and feet don't follow the spinning bars or frame, and each trick moves them itself.
+--- @return Vector?
+function ENT:GetRiderTargetPosition(attachmentName, boneName)
+  return (self:IsDoingTrick() and self.restTargetPositions[boneName]) or self:GetAttachmentPosition(attachmentName)
+end
+
 --- @return Vector? # Where the ball of the foot goes: out from the pedal attachment and above its axle
 function ENT:GetFootBallTarget(leg, left, up)
-  local pedalPosition = self:GetAttachmentPosition(leg.pedalAttachment)
+  local pedalPosition = self:GetRiderTargetPosition(leg.pedalAttachment, leg.pedalBone)
 
   return pedalPosition and pedalPosition + left * (leg.side * self.PedalCenterOffset) + up * self.FootBallHeight
 end
 
 --- @return Vector? # Where the hand holds: the grip attachment moved by the model's grip offset
 function ENT:GetGripTarget(arm, forward, left, up)
-  local gripPosition = self:GetAttachmentPosition(arm.gripAttachment)
+  local gripPosition = self:GetRiderTargetPosition(arm.gripAttachment, arm.gripBone)
   local gripOffset = self.GripOffset
 
   return gripPosition and gripPosition + forward * gripOffset.x + left * (arm.side * gripOffset.y) + up * gripOffset.z
 end
 
---- Plants the ball of the foot on the pedal, with the foot's angle following the pedal stroke (ankling).
-function ENT:PoseRiderLeg(rider, leg, forward, left, up)
+--- Plants the ball of the foot on the pedal, with the foot's angle following the pedal stroke (ankling). Tricks being
+--- spun can move the foot elsewhere.
+function ENT:PoseRiderLeg(rider, leg, frame)
+  local forward, left, up = frame.forward, frame.left, frame.up
   local footBall = self:GetFootBallTarget(leg, left, up)
   local thigh, calf, foot, toe = lookupBones(rider, leg.thigh, leg.calf, leg.foot, leg.toe)
 
   if (not footBall or not thigh or not calf or not foot) then
     return
+  end
+
+  for _, trick in ipairs(bicycle.trick.getAll()) do
+    local angle = self.trickAngles[trick.id]
+
+    if (angle) then
+      footBall = trick:AdjustFootTarget(self, leg, footBall, angle, frame)
+    end
   end
 
   -- The heel drops as the pedal comes over the front and lifts as it goes round the back.
@@ -240,13 +378,23 @@ function ENT:PoseRiderLeg(rider, leg, forward, left, up)
   end
 end
 
---- Closes the hand around the grip, keeping the hand's own pose from the rider's sequence.
-function ENT:PoseRiderArm(rider, arm, forward, left, up)
+--- Closes the hand around the grip, keeping the hand's own pose from the rider's sequence. Tricks being spun can move
+--- the hand elsewhere.
+function ENT:PoseRiderArm(rider, arm, frame)
+  local forward, left, up = frame.forward, frame.left, frame.up
   local gripPosition = self:GetGripTarget(arm, forward, left, up)
   local upperArm, forearm, hand, finger = lookupBones(rider, arm.upperArm, arm.forearm, arm.hand, arm.finger)
 
   if (not gripPosition or not upperArm or not forearm or not hand) then
     return
+  end
+
+  for _, trick in ipairs(bicycle.trick.getAll()) do
+    local angle = self.trickAngles[trick.id]
+
+    if (angle) then
+      gripPosition = trick:AdjustGripTarget(self, arm, gripPosition, angle, frame)
+    end
   end
 
   local elbowPole = left * (arm.side * bicycle.getClientSetting("rider_elbow_out")) - up - forward * ELBOW_BACK
@@ -272,15 +420,14 @@ function ENT:PoseRider(rider)
     return
   end
 
-  local angles = self:GetAngles()
-  local forward, left, up = angles:Forward(), -angles:Right(), angles:Up()
+  local frame = self:GetTrickFrame()
 
   for _, leg in ipairs(RIDER_LEGS) do
-    self:PoseRiderLeg(rider, leg, forward, left, up)
+    self:PoseRiderLeg(rider, leg, frame)
   end
 
   for _, arm in ipairs(RIDER_ARMS) do
-    self:PoseRiderArm(rider, arm, forward, left, up)
+    self:PoseRiderArm(rider, arm, frame)
   end
 end
 
@@ -483,10 +630,45 @@ function ENT:StopSoundLoops()
   end
 end
 
+--- @return number # The drawn angle of a spin, signed and unwrapped like the networked one
+local function approachSpinDisplay(display, networkedAngle, networkedSpeed, deltaTime)
+  -- Landing takes the whole turns off a spin. They look the same, so the drawn angle drops them too instead of
+  -- spinning all the way back.
+  display = display + math.Round((networkedAngle - display) / 360) * 360
+  display = display + networkedSpeed * deltaTime
+  display = Lerp(1 - math.exp(-TRICK_DISPLAY_RESPONSE * deltaTime), display, networkedAngle)
+
+  -- Settled exactly, so a bike that isn't spinning skips the trick posing.
+  if (networkedSpeed == 0 and math.abs(networkedAngle - display) < TRICK_DISPLAY_EPSILON) then
+    return networkedAngle
+  end
+
+  return display
+end
+
+--- Follows the spins the server sends
+function ENT:UpdateTrickAngles(deltaTime)
+  local networkedStates = self.networkedTrickStates or {}
+
+  for _, trick in ipairs(bicycle.trick.getAll()) do
+    local networked = networkedStates[trick.id]
+    local angle = approachSpinDisplay(
+      self.trickAngles[trick.id] or 0,
+      networked and networked.angle or 0,
+      networked and networked.speed or 0,
+      deltaTime
+    )
+
+    self.trickAngles[trick.id] = angle ~= 0 and angle or nil
+  end
+end
+
 function ENT:Think()
   local deltaTime = FrameTime()
 
   self:SyncGeometry()
+
+  self:UpdateTrickAngles(deltaTime)
 
   self.wheelSpinAngle = (self.wheelSpinAngle + self:GetForwardSpeed() / self.WheelRadius * deltaTime) % FULL_TURN
   self.crankAngle = (self.crankAngle + self:GetCadence() / 60 * FULL_TURN * deltaTime) % FULL_TURN
@@ -501,6 +683,10 @@ function ENT:Think()
 end
 
 function ENT:OnRemove()
+  if (self.trickPoseCallback) then
+    self:RemoveCallback("BuildBonePositions", self.trickPoseCallback)
+  end
+
   self:StopPosingRider()
   self:StopSoundLoops()
 end
@@ -570,6 +756,17 @@ function ENT:DrawDebug()
   render.DrawLine(position, position + self:GetUp() * DEBUG_LINE_LENGTH, colors.actualLean, false)
   render.DrawLine(position, position + targetUp * DEBUG_LINE_LENGTH, colors.targetLean, false)
   render.DrawLine(position, position + self:GetVelocity() * DEBUG_VELOCITY_SCALE, colors.velocity, false)
+
+  local steeringPivot, steeringAxis = self:GetSteeringAxis()
+
+  if (steeringPivot) then
+    render.DrawLine(
+      steeringPivot,
+      steeringPivot + steeringAxis * STEERING_AXIS_DEBUG_LENGTH,
+      colors.steeringAxis,
+      false
+    )
+  end
 end
 
 --- Marks where the model's settings place the rider: the seat with the tilt of the rider's back, and the hand and foot

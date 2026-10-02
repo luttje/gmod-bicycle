@@ -34,6 +34,18 @@ local PITCH_HOLD_GAIN = 5
 local PITCH_HOLD_MAX_SPEED = 90
 local PITCH_HOLD_RESPONSE = 10
 
+-- Keys whose double-taps tricks can read, and how quickly the second press must follow the first (s).
+local DOUBLE_TAP_KEYS = { IN_FORWARD, IN_BACK, IN_MOVELEFT, IN_MOVERIGHT }
+local DOUBLE_TAP_WINDOW = 0.3
+
+-- In the air the nose eases along the bike's path, so it lands on its wheels instead of tumbling over: following this
+-- fraction of the path's slope, up to the max (deg), at the gain (1/s) and max pitch speed (deg/s).
+local AIR_PITCH_FOLLOW = 0.5
+local AIR_PITCH_MAX = 25
+local AIR_PITCH_GAIN = 4
+local AIR_PITCH_MAX_SPEED = 120
+local AIR_PITCH_RESPONSE = 6
+
 -- While a tyre is landing, pitch spin is damped (1/s), so one wheel landing hard doesn't kick that end up and slam
 -- the other one down, which repeated hops would build into a flip.
 local LANDING_PITCH_DAMPING = 12
@@ -84,13 +96,43 @@ function ENT:IsTooDeepToRide()
   return maxWaterLevel > 0 and self:WaterLevel() >= maxWaterLevel
 end
 
---- Parked bikes hold their brakes.
+--- A triple tap counts once, as the second press is used up.
+--- @param rider Player
+--- @return table<number, boolean> # The DOUBLE_TAP_KEYS pressed a second time within DOUBLE_TAP_WINDOW
+function ENT:ReadDoubleTaps(rider)
+  local doubleTaps = {}
+  local now = CurTime()
+
+  self.tapKeys = self.tapKeys or {}
+
+  for _, key in ipairs(DOUBLE_TAP_KEYS) do
+    local tapKey = self.tapKeys[key] or {}
+    local isHeld = rider:KeyDown(key)
+
+    if (isHeld and not tapKey.isHeld) then
+      if (tapKey.pressedAt and now - tapKey.pressedAt <= DOUBLE_TAP_WINDOW) then
+        doubleTaps[key] = true
+        tapKey.pressedAt = nil
+      else
+        tapKey.pressedAt = now
+      end
+    end
+
+    tapKey.isHeld = isHeld
+    self.tapKeys[key] = tapKey
+  end
+
+  return doubleTaps
+end
+
+--- Parked bikes hold their brakes. The "BicycleReadInput" hook can add or change fields, which tricks then read.
 --- @param rider Player?
 --- @return table
 function ENT:ReadRiderInput(rider)
   if (not IsValid(rider)) then
     self.wasJumpHeld = false
     self.wasBellHeld = false
+    self.tapKeys = nil
 
     return {
       isPedalHeld = false,
@@ -100,7 +142,9 @@ function ENT:ReadRiderInput(rider)
       isHopPressed = false,
       isWheelieHeld = false,
       isLeanForwardHeld = false,
+      isTrickHeld = false,
       isBellPressed = false,
+      doubleTaps = {},
     }
   end
 
@@ -112,7 +156,7 @@ function ENT:ReadRiderInput(rider)
   local isBellPressed = isBellHeld and not self.wasBellHeld
   self.wasBellHeld = isBellHeld
 
-  return {
+  local input = {
     isPedalHeld = rider:KeyDown(IN_FORWARD),
     isBrakeHeld = rider:KeyDown(IN_BACK),
     steerDirection = (rider:KeyDown(IN_MOVERIGHT) and 1 or 0) - (rider:KeyDown(IN_MOVELEFT) and 1 or 0),
@@ -120,8 +164,15 @@ function ENT:ReadRiderInput(rider)
     isHopPressed = isHopPressed,
     isWheelieHeld = rider:KeyDown(IN_ATTACK2),
     isLeanForwardHeld = rider:KeyDown(IN_ATTACK),
+    isTrickHeld = rider:KeyDown(IN_DUCK),
     isBellPressed = isBellPressed,
+    -- IN_ keys double-tapped this tick.
+    doubleTaps = self:ReadDoubleTaps(rider),
   }
+
+  hook.Run("BicycleReadInput", rider, self, input)
+
+  return input
 end
 
 --- Everything the ride needs to know about the bike this tick, before any forces are applied.
@@ -409,6 +460,28 @@ function ENT:GetLandingPitchCorrection(ride, deltaTime)
   return ride.right * (-currentPitchSpeed * getBlendFraction(LANDING_PITCH_DAMPING, deltaTime))
 end
 
+--- Not realistic, but riding off jumps without tumbling over is more fun. Scaled by bicycle_air_pitch_control.
+--- @return Vector # Angular velocity correction in world space, deg/s
+function ENT:GetAirPitchCorrection(ride, deltaTime)
+  local pathPitch = bicycle.getElevation(ride.velocity:GetNormalized())
+
+  -- Rolling backwards, the rear leads down the path.
+  if (ride.velocity:Dot(ride.forward) < 0) then
+    pathPitch = -pathPitch
+  end
+
+  local targetPitch = math.Clamp(pathPitch * AIR_PITCH_FOLLOW, -AIR_PITCH_MAX, AIR_PITCH_MAX)
+  local wantedPitchSpeed = math.Clamp(
+    (targetPitch - ride.pitch) * AIR_PITCH_GAIN,
+    -AIR_PITCH_MAX_SPEED,
+    AIR_PITCH_MAX_SPEED
+  )
+  local currentPitchSpeed = ride.angularVelocity:Dot(ride.right)
+  local blend = getBlendFraction(AIR_PITCH_RESPONSE, deltaTime) * bicycle.getTuning("air_pitch_control")
+
+  return ride.right * ((wantedPitchSpeed - currentPitchSpeed) * blend)
+end
+
 --- Keeps the bike balanced, leaning into the turn the handlebar asks for and heading where that lean allows.
 --- @return number # The lean the bike aims for in degrees, positive is right
 function ENT:ApplyBalance(physics, ride, input, steerAngle, deltaTime)
@@ -433,6 +506,11 @@ function ENT:ApplyBalance(physics, ride, input, steerAngle, deltaTime)
     correction:Add(self:GetPitchHoldCorrection(ride, bicycle.getTuning("wheelie_angle"), deltaTime))
   elseif (ride.isStoppieing and ride.isFrontGrounded) then
     correction:Add(self:GetPitchHoldCorrection(ride, -bicycle.getTuning("stoppie_angle"), deltaTime))
+  elseif (ride.groundedCount == 0) then
+    -- A flip turns the bike over itself.
+    if (not self.isRotatingBike) then
+      correction:Add(self:GetAirPitchCorrection(ride, deltaTime))
+    end
   else
     correction:Add(self:GetLandingPitchCorrection(ride, deltaTime))
   end
@@ -464,7 +542,8 @@ function ENT:PhysicsSimulate(physics, deltaTime)
   local ride = self:MeasureRide(physics, rider)
 
   -- Crashing ejects the rider, which can't happen inside the physics step.
-  if (ride.isRidden and not ride.isCrashed and not self.isPhysgunHeld
+  -- A trick turning the bike over, such as a flip, judges its own landing instead.
+  if (ride.isRidden and not ride.isCrashed and not self.isPhysgunHeld and not self.isRotatingBike
         and (math.abs(ride.lean) > bicycle.getTuning("crash_lean") or math.abs(ride.pitch) > bicycle.getTuning("crash_pitch"))) then
     self.hasPendingCrash = true
   end
@@ -491,7 +570,9 @@ function ENT:PhysicsSimulate(physics, deltaTime)
   -- Keeps the stoppie going next tick without the brake, until the front wheel leaves the ground.
   self.isStoppieing = ride.isStoppieing and ride.isFrontGrounded
 
-  local steerAngle = self:UpdateSteering(input.steerDirection, ride.absoluteSpeed, deltaTime)
+  -- Steering spins a trick while its button is held, so the bike doesn't also land crossed up.
+  local isSteeringTrick = self:UpdateTricks(physics, ride, input, rider, deltaTime)
+  local steerAngle = self:UpdateSteering(isSteeringTrick and 0 or input.steerDirection, ride.absoluteSpeed, deltaTime)
   local isPedalling = input.isPedalHeld and ride.isRearGrounded
 
   if (input.isBellPressed) then

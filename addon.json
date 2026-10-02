@@ -1,12 +1,16 @@
 {
   "title": "Bicycle",
   "type": "vehicle",
-  "tags": ["fun", "realism"],
+  "tags": [
+    "fun",
+    "realism"
+  ],
   "ignore": [
     ".git/*",
     ".github/*",
     ".editorconfig",
     ".gitignore",
+    ".vscode/*",
     "*.md",
     "LICENSE",
     "modelsrc/*",

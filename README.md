@@ -22,6 +22,8 @@ start Garry's Mod.
 Knocked the bike over? Press **E** on it and it stands back up when you get on.
 
 ## Bicycle Controls
+
+### Riding
 | Key | Action |
 |---|---|
 | W | Pedal |
@@ -32,8 +34,11 @@ Knocked the bike over? Press **E** on it and it stands back up when you get on.
 | Left mouse (hold) | Lean forward. Brake while leaning to pull a stoppie, then let go of the brake to keep rolling on the front wheel |
 | Right mouse (hold) | Wheelie |
 | R | Ring the bell |
-| Ctrl | Switch between first and third person |
 | E | Get off |
+
+> [!HINT]
+> Prefer riding in third person? Turn on **Third person** under **Options → Bicycle → Client**, or run
+> `bicycle_cam_third_person 1` in the console.
 
 > [!HINT]
 > Hitting something hard enough will throw you over the handlebars.
@@ -42,10 +47,28 @@ Knocked the bike over? Press **E** on it and it stands back up when you get on.
 > Water slows you down, and riding in until the bike is half under throws you off. Server admins can change both, or turn
 > the throwing off, under **Water** in the server settings.
 
+### Tricks
+| Trick | When | Keys | Notes |
+|---|---|---|---|
+| Tailwhip | In the air | Left mouse + A / D | Spins the frame around the handlebar. Keep holding for more turns |
+| Barspin | In the air or in a wheelie | Right mouse + A / D | Spins the handlebar. Keep holding for more turns |
+| Tailwhip + barspin | In the air | Both mouse buttons + A / D | Both at once |
+| Backflip / front flip | In the air | Double-tap S / W | Keep holding the second press for more flips |
+| No-hander | In the air | Ctrl + W | Lasts as long as you hold it |
+| No-footer | In the air | Ctrl + S | Lasts as long as you hold it |
+| Can-can | In the air | Ctrl + A / D | Left / right leg. Lasts as long as you hold it |
+| X-up | In the air or in a wheelie | Right mouse + W | Lasts as long as you hold it |
+
+> [!HINT]
+> Land your tricks straight: touching down more than 45° off throws you off. Let go of the buttons early and the spin finishes the turn by itself.
+
+> [!HINT]
+> Tricks combine: try a backflip no-hander by double-tapping S, then holding Ctrl + W.
+
 ## Settings
 Open the spawn menu and go to **Options → Bicycle**. Changes apply straight away, so you can tweak things while riding.
 
-- **Client** is just for you: camera distance and height, camera roll, speedometer units (km/h, mph or off), how
+- **Client** is just for you: first or third person, camera distance and height, camera roll, speedometer units (km/h, mph or off), how
   your character sits on the bike and the volume of the riding sounds and wind. These are saved.
 - **Server** changes how every bike on the server rides: top speed, acceleration, steering, grip, suspension and more.
   Only the host or an admin can change these, and they reset to the defaults every time the server restarts. Admins can
@@ -85,6 +108,47 @@ end)
   gives you the matching `bicycle.registerModel` call to copy.
 - [📚 `MODELING_GUIDE.md`](MODELING_GUIDE.md) explains how to build a model that works with the addon.
 - With `developer 1`, a debug overlay shows the simulated wheels and the model's attachments.
+
+## For modders: adding your own tricks
+Every trick is a file in `lua/bicycle/tricks/`. The addon loads every file in that folder on the server and the
+client, so another addon can add a trick by putting a file there too. A trick is an angle the server moves on from the
+rider's input, which the rider has to land near a whole turn:
+
+```lua
+-- lua/bicycle/tricks/myaddon_tabletop.lua
+local TRICK = {}
+
+TRICK.id = "myaddon_tabletop"
+TRICK.name = "Tabletop"
+-- Which wheels may touch the ground during the trick: "none", "rear", "front" and/or "both"
+TRICK.contact = { none = true }
+
+-- Server: which way to drive the trick (1, -1, or 0 to let it finish), and whether it takes the steering
+function TRICK:ReadInput(input, rider, state)
+  return (input.isTrickHeld and input.isPedalHeld) and 1 or 0, false
+end
+
+-- Server: hold the pose half a turn in while driven, see also bicycle.trick.spin for whole turns
+function TRICK:Spin(state, isDriven, direction, deltaTime)
+  bicycle.trick.hold(state, isDriven, direction, 700, deltaTime)
+end
+
+if (CLIENT) then
+  -- Moves the bike's bones, with `frame` holding the bike's directions and steering axis
+  function TRICK:PoseBike(bike, angle, frame)
+  end
+end
+
+bicycle.trick.register(TRICK)
+```
+
+A trick can also apply forces to the bike (`Simulate`), judge its own landing (`Land`), turn the real bike over
+(`rotatesBike`) and move the rider's hands and feet (`AdjustGripTarget`, `AdjustFootTarget`). All of it is documented
+in [`lua/bicycle/metatables/sh_base_trick.lua`](lua/bicycle/metatables/sh_base_trick.lua). The built-in tricks are
+complete examples, such as the [tailwhip](lua/bicycle/tricks/tailwhip.lua), the [backflip](lua/bicycle/tricks/backflip.lua)
+and the [no-hander](lua/bicycle/tricks/no_hander.lua).
+
+To give tricks more controls, add fields to the rider's input with the `BicycleReadInput` hook, see below.
 
 ## For gamemode developers: hooks
 These hooks let gamemodes and other addons react to bikes. They run on the server, except for the HUD one.
@@ -187,6 +251,33 @@ it. Return `false` to keep the bell silent:
 hook.Add("BicycleCanRingBell", "myaddon.quietBell", function(bike, rider)
   if (rider:Team() == TEAM_MUTED) then
     return false
+  end
+end)
+```
+
+### Tricks
+`BicycleReadInput` runs on the server every physics tick while the bike is ridden. Add or change fields of `input` to
+give tricks (`TRICK:ReadInput`) more controls. It runs often, so keep it cheap:
+
+```lua
+--- @param rider Player The rider
+--- @param bike Entity The bike
+--- @param input table The rider's input, see ENT:ReadRiderInput in lua/entities/sent_bicycle/sv_ride.lua
+hook.Add("BicycleReadInput", "myaddon.grab", function(rider, bike, input)
+  input.isGrabHeld = rider:KeyDown(IN_USE)
+end)
+```
+
+When a rider lands tricks cleanly, the server runs `BicycleTrickLanded` with the whole turns of each trick by its id.
+Tricks landed without a whole turn are left out:
+
+```lua
+--- @param rider Player The rider
+--- @param bike Entity The bike
+--- @param landedTricks table<string, number> Whole turns by trick id, such as { backflip = 1, no_hander = 1 }
+hook.Add("BicycleTrickLanded", "myaddon.score", function(rider, bike, landedTricks)
+  for id, turns in pairs(landedTricks) do
+    rider:ChatPrint(bicycle.trick.get(id).name .. " x" .. turns)
   end
 end)
 ```

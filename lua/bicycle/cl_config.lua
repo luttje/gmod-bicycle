@@ -4,6 +4,13 @@ bicycle.clientSettingSections = {
     name = "Camera",
     settings = {
       {
+        name = "cam_third_person",
+        label = "Third person",
+        type = "bool",
+        default = 0,
+        description = "Ride in third person instead of first person",
+      },
+      {
         name = "cam_roll",
         label = "Camera roll",
         default = 0.35,
@@ -224,6 +231,7 @@ bicycle.debugColors = {
   wheelTrace = Color(255, 230, 0),
   velocity = Color(255, 255, 255),
   attachment = Color(255, 80, 255),
+  steeringAxis = Color(255, 255, 120),
   editorSeat = Color(80, 200, 255),
   editorGrip = Color(255, 160, 40),
   editorFoot = Color(80, 255, 120),

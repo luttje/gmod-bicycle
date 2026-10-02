@@ -1,0 +1,1511 @@
+
+
+
+materialPath: G:\SteamLibrary\steamapps\common\GarrysMod\garrysmod\materials
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.vmf
+Patching WVT material: maps/bicycle_test_prison/nature/blendgrassgravel001b_wvt_patch
+fixing up env_cubemap materials on brush sides...
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+Processing areas...done (0)
+Building Faces...done (0)
+Chop Details...done (0)
+Find Visible Detail Sides...
+Merged 28 detail faces...done (0)
+Merging details...done (0)
+FixTjuncs...
+PruneNodes...
+WriteBSP...
+done (0)
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt...
+Building visibility clusters...
+done (0)
+Creating default LDR cubemaps for env_cubemap using skybox materials:
+   skybox/sky_day02_09_hdr*.vmt
+ ! Run buildcubemaps in the engine to get the correct cube maps.
+*** Error: Skybox vtf files for skybox/sky_day02_09_hdr weren't compiled with the same size texture and/or same flags!
+Can't load skybox file skybox/sky_day02_09_hdr to build the default cubemap!
+Finding displacement neighbors...
+Finding lightmap sample positions...
+Displacement Alpha : 0...1...2...3...4...5...6...7...8...9...10
+Building Physics collision data...
+done (0) (82750 bytes)
+Placing detail props : 0...1...2...3...4...5...6...7...8...9...10
+Compacting texture/material tables...
+Reduced 660 texinfos to 326
+Reduced 44 texdatas to 33 (1152 bytes to 737)
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+16 threads
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt
+ 342 portalclusters
+1347 numportals
+BasePortalVis:       0...1...2...3...4...5...6...7...8...9...10 (0)
+PortalFlow:          0...1...2...3...4...5...6...7...8...9...10 (5)
+Optimized: 81 visible clusters (0.08%)
+Total clusters visible: 106749
+Average clusters visible: 312
+Building PAS...
+Average clusters audible: 340
+visdatasize:31953  compressed from 32832
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+5 seconds elapsed
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (5)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (0)
+transfers 1270645, max 441
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0031 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (0)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (2)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   4/4096          192/196608   ( 0.1%) 
+brushes                220/65535        2640/786420   ( 0.3%) 
+brushsides            1893/655350      15144/5242800  ( 0.3%) 
+planes                1562/65536       31240/1310720  ( 2.4%) 
+vertexes              1472/65536       17664/786432   ( 2.2%) 
+nodes                  571/65536       18272/2097152  ( 0.9%) 
+texinfos               326/16384       23472/1179648  ( 2.0%) 
+texdata                 33/8192         1056/262144   ( 0.4%) 
+dispinfos               25/0            4400/0        ( 0.0%) 
+disp_verts             681/0           13620/0        ( 0.0%) 
+disp_tris              896/0            1792/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      133316/0          133316/0        ( 0.0%) 
+faces                  885/65536       49560/3670016  ( 1.4%) 
+hdr faces                0/65536           0/3670016  ( 0.0%) 
+origfaces              579/65536       32424/3670016  ( 0.9%) 
+leaves                 576/65536       18432/2097152  ( 0.9%) 
+leaffaces             1159/65536        2318/131072   ( 1.8%) 
+leafbrushes            613/65536        1226/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6424/512000      25696/2048000  ( 1.3%) 
+edges                 3833/256000      15332/1024000  ( 1.5%) 
+LDR worldlights         17/8192         1496/720896   ( 0.2%) 
+HDR worldlights          0/8192            0/720896   ( 0.0%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             67/32768         670/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices          1038/65536        2076/131072   ( 1.6%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      612744/0        ( 0.0%) 
+HDR lightdata         [variable]           0/0        ( 0.0%) 
+visdata               [variable]       31953/16777216 ( 0.2%) 
+entdata               [variable]       26824/4194304  ( 0.6%) 
+LDR ambient table      576/65536        2304/262144   ( 0.9%) 
+HDR ambient table      576/65536        2304/262144   ( 0.9%) 
+LDR leaf ambient      3382/65536       94696/1835008  ( 5.2%) 
+HDR leaf ambient       576/65536       16128/1835008  ( 0.9%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        5434/0        ( 0.0%) 
+static prop count       45/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19170/0        ( 0.0%) 
+physics               [variable]       82750/4194304  ( 2.0%) 
+physics terrain       [variable]        3861/1048576  ( 0.4%) 
+
+Level flags = 0
+
+Total triangle count: 2334
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+7 seconds elapsed
+
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (5)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (1)
+transfers 1270645, max 441
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0035 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (0)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (1)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   4/4096          192/196608   ( 0.1%) 
+brushes                220/65535        2640/786420   ( 0.3%) 
+brushsides            1893/655350      15144/5242800  ( 0.3%) 
+planes                1562/65536       31240/1310720  ( 2.4%) 
+vertexes              1472/65536       17664/786432   ( 2.2%) 
+nodes                  571/65536       18272/2097152  ( 0.9%) 
+texinfos               326/16384       23472/1179648  ( 2.0%) 
+texdata                 33/8192         1056/262144   ( 0.4%) 
+dispinfos               25/0            4400/0        ( 0.0%) 
+disp_verts             681/0           13620/0        ( 0.0%) 
+disp_tris              896/0            1792/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      133316/0          133316/0        ( 0.0%) 
+faces                  885/65536       49560/3670016  ( 1.4%) 
+hdr faces              885/65536       49560/3670016  ( 1.4%) 
+origfaces              579/65536       32424/3670016  ( 0.9%) 
+leaves                 576/65536       18432/2097152  ( 0.9%) 
+leaffaces             1159/65536        2318/131072   ( 1.8%) 
+leafbrushes            613/65536        1226/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6424/512000      25696/2048000  ( 1.3%) 
+edges                 3833/256000      15332/1024000  ( 1.5%) 
+LDR worldlights         17/8192         1496/720896   ( 0.2%) 
+HDR worldlights         17/8192         1496/720896   ( 0.2%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             67/32768         670/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices          1038/65536        2076/131072   ( 1.6%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      612744/0        ( 0.0%) 
+HDR lightdata         [variable]      612744/0        ( 0.0%) 
+visdata               [variable]       31953/16777216 ( 0.2%) 
+entdata               [variable]       26824/4194304  ( 0.6%) 
+LDR ambient table      576/65536        2304/262144   ( 0.9%) 
+HDR ambient table      576/65536        2304/262144   ( 0.9%) 
+LDR leaf ambient      3382/65536       94696/1835008  ( 5.2%) 
+HDR leaf ambient      3289/65536       92092/1835008  ( 5.0%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        5434/0        ( 0.0%) 
+static prop count       45/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19170/0        ( 0.0%) 
+physics               [variable]       82750/4194304  ( 2.0%) 
+physics terrain       [variable]        3861/1048576  ( 0.4%) 
+
+Level flags = 0
+
+Total triangle count: 2334
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+7 seconds elapsed
+
+
+
+
+materialPath: G:\SteamLibrary\steamapps\common\GarrysMod\garrysmod\materials
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.vmf
+Patching WVT material: maps/bicycle_test_prison/nature/blendgrassgravel001b_wvt_patch
+fixing up env_cubemap materials on brush sides...
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+Processing areas...done (0)
+Building Faces...done (0)
+Chop Details...done (0)
+Find Visible Detail Sides...
+Merged 28 detail faces...done (0)
+Merging details...done (0)
+FixTjuncs...
+PruneNodes...
+WriteBSP...
+done (0)
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt...
+Building visibility clusters...
+done (0)
+Creating default LDR cubemaps for env_cubemap using skybox materials:
+   skybox/sky_day02_09_hdr*.vmt
+ ! Run buildcubemaps in the engine to get the correct cube maps.
+*** Error: Skybox vtf files for skybox/sky_day02_09_hdr weren't compiled with the same size texture and/or same flags!
+Can't load skybox file skybox/sky_day02_09_hdr to build the default cubemap!
+Finding displacement neighbors...
+Finding lightmap sample positions...
+Displacement Alpha : 0...1...2...3...4...5...6...7...8...9...10
+Building Physics collision data...
+done (0) (82750 bytes)
+Placing detail props : 0...1...2...3...4...5...6...7...8...9...10
+Compacting texture/material tables...
+Reduced 640 texinfos to 326
+Reduced 44 texdatas to 33 (1152 bytes to 737)
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+16 threads
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt
+ 342 portalclusters
+1347 numportals
+BasePortalVis:       0...1...2...3...4...5...6...7...8...9...10 (0)
+Optimized: 309 visible clusters (0.27%)
+Total clusters visible: 114743
+Average clusters visible: 335
+Building PAS...
+Average clusters audible: 340
+visdatasize:32082  compressed from 32832
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (0)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (0)
+transfers 1304526, max 452
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0031 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (0)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (1)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   2/4096           96/196608   ( 0.0%) 
+brushes                217/65535        2604/786420   ( 0.3%) 
+brushsides            1873/655350      14984/5242800  ( 0.3%) 
+planes                1488/65536       29760/1310720  ( 2.3%) 
+vertexes              1439/65536       17268/786432   ( 2.2%) 
+nodes                  550/65536       17600/2097152  ( 0.8%) 
+texinfos               326/16384       23472/1179648  ( 2.0%) 
+texdata                 33/8192         1056/262144   ( 0.4%) 
+dispinfos               25/0            4400/0        ( 0.0%) 
+disp_verts             681/0           13620/0        ( 0.0%) 
+disp_tris              896/0            1792/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      133316/0          133316/0        ( 0.0%) 
+faces                  885/65536       49560/3670016  ( 1.4%) 
+hdr faces                0/65536           0/3670016  ( 0.0%) 
+origfaces              579/65536       32424/3670016  ( 0.9%) 
+leaves                 553/65536       17696/2097152  ( 0.8%) 
+leaffaces             1159/65536        2318/131072   ( 1.8%) 
+leafbrushes            605/65536        1210/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6424/512000      25696/2048000  ( 1.3%) 
+edges                 3833/256000      15332/1024000  ( 1.5%) 
+LDR worldlights         20/8192         1760/720896   ( 0.2%) 
+HDR worldlights          0/8192            0/720896   ( 0.0%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             67/32768         670/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices          1038/65536        2076/131072   ( 1.6%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      612744/0        ( 0.0%) 
+HDR lightdata         [variable]           0/0        ( 0.0%) 
+visdata               [variable]       32082/16777216 ( 0.2%) 
+entdata               [variable]       27787/4194304  ( 0.7%) 
+LDR ambient table      553/65536        2212/262144   ( 0.8%) 
+HDR ambient table      553/65536        2212/262144   ( 0.8%) 
+LDR leaf ambient      3502/65536       98056/1835008  ( 5.3%) 
+HDR leaf ambient       553/65536       15484/1835008  ( 0.8%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        4958/0        ( 0.0%) 
+static prop count       44/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19170/0        ( 0.0%) 
+physics               [variable]       82750/4194304  ( 2.0%) 
+physics terrain       [variable]        3861/1048576  ( 0.4%) 
+
+Level flags = 0
+
+Total triangle count: 2334
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+2 seconds elapsed
+
+
+
+
+materialPath: G:\SteamLibrary\steamapps\common\GarrysMod\garrysmod\materials
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.vmf
+Patching WVT material: maps/bicycle_test_prison/nature/blendgrassgravel001b_wvt_patch
+fixing up env_cubemap materials on brush sides...
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+Processing areas...done (0)
+Building Faces...done (0)
+Chop Details...done (0)
+Find Visible Detail Sides...
+Merged 28 detail faces...done (0)
+Merging details...done (0)
+FixTjuncs...
+PruneNodes...
+WriteBSP...
+done (0)
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt...
+Building visibility clusters...
+done (0)
+Creating default LDR cubemaps for env_cubemap using skybox materials:
+   skybox/sky_day02_09_hdr*.vmt
+ ! Run buildcubemaps in the engine to get the correct cube maps.
+*** Error: Skybox vtf files for skybox/sky_day02_09_hdr weren't compiled with the same size texture and/or same flags!
+Can't load skybox file skybox/sky_day02_09_hdr to build the default cubemap!
+Finding displacement neighbors...
+Finding lightmap sample positions...
+Displacement Alpha : 0...1...2...3...4...5...6...7...8...9...10
+Building Physics collision data...
+done (0) (82750 bytes)
+Placing detail props : 0...1...2...3...4...5...6...7...8...9...10
+Compacting texture/material tables...
+Reduced 646 texinfos to 327
+Reduced 44 texdatas to 33 (1152 bytes to 737)
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+16 threads
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt
+ 342 portalclusters
+1347 numportals
+BasePortalVis:       0...1...2...3...4...5...6...7...8...9...10 (0)
+Optimized: 309 visible clusters (0.27%)
+Total clusters visible: 114743
+Average clusters visible: 335
+Building PAS...
+Average clusters audible: 340
+visdatasize:32082  compressed from 32832
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (0)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (0)
+transfers 1243626, max 437
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0032 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (0)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (1)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   2/4096           96/196608   ( 0.0%) 
+brushes                217/65535        2604/786420   ( 0.3%) 
+brushsides            1873/655350      14984/5242800  ( 0.3%) 
+planes                1496/65536       29920/1310720  ( 2.3%) 
+vertexes              1443/65536       17316/786432   ( 2.2%) 
+nodes                  550/65536       17600/2097152  ( 0.8%) 
+texinfos               327/16384       23544/1179648  ( 2.0%) 
+texdata                 33/8192         1056/262144   ( 0.4%) 
+dispinfos               26/0            4576/0        ( 0.0%) 
+disp_verts             706/0           14120/0        ( 0.0%) 
+disp_tris              928/0            1856/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      148196/0          148196/0        ( 0.0%) 
+faces                  886/65536       49616/3670016  ( 1.4%) 
+hdr faces                0/65536           0/3670016  ( 0.0%) 
+origfaces              580/65536       32480/3670016  ( 0.9%) 
+leaves                 553/65536       17696/2097152  ( 0.8%) 
+leaffaces             1159/65536        2318/131072   ( 1.8%) 
+leafbrushes            605/65536        1210/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6432/512000      25728/2048000  ( 1.3%) 
+edges                 3841/256000      15364/1024000  ( 1.5%) 
+LDR worldlights         20/8192         1760/720896   ( 0.2%) 
+HDR worldlights          0/8192            0/720896   ( 0.0%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             67/32768         670/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices          1038/65536        2076/131072   ( 1.6%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      627628/0        ( 0.0%) 
+HDR lightdata         [variable]           0/0        ( 0.0%) 
+visdata               [variable]       32082/16777216 ( 0.2%) 
+entdata               [variable]       27787/4194304  ( 0.7%) 
+LDR ambient table      553/65536        2212/262144   ( 0.8%) 
+HDR ambient table      553/65536        2212/262144   ( 0.8%) 
+LDR leaf ambient      3498/65536       97944/1835008  ( 5.3%) 
+HDR leaf ambient       553/65536       15484/1835008  ( 0.8%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        4884/0        ( 0.0%) 
+static prop count       43/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19170/0        ( 0.0%) 
+physics               [variable]       82750/4194304  ( 2.0%) 
+physics terrain       [variable]        4040/1048576  ( 0.4%) 
+
+Level flags = 0
+
+Total triangle count: 2336
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+2 seconds elapsed
+
+
+
+
+materialPath: G:\SteamLibrary\steamapps\common\GarrysMod\garrysmod\materials
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.vmf
+Patching WVT material: maps/bicycle_test_prison/nature/blendgrassgravel001b_wvt_patch
+fixing up env_cubemap materials on brush sides...
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+Processing areas...done (0)
+Building Faces...done (0)
+Chop Details...done (0)
+Find Visible Detail Sides...
+Merged 8 detail faces...done (0)
+Merging details...done (0)
+FixTjuncs...
+PruneNodes...
+WriteBSP...
+done (0)
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt...
+Building visibility clusters...
+done (0)
+Creating default LDR cubemaps for env_cubemap using skybox materials:
+   skybox/sky_day02_09_hdr*.vmt
+ ! Run buildcubemaps in the engine to get the correct cube maps.
+*** Error: Skybox vtf files for skybox/sky_day02_09_hdr weren't compiled with the same size texture and/or same flags!
+Can't load skybox file skybox/sky_day02_09_hdr to build the default cubemap!
+Finding displacement neighbors...
+Finding lightmap sample positions...
+Displacement Alpha : 0...1...2...3...4...5...6...7...8...9...10
+Building Physics collision data...
+done (0) (78476 bytes)
+Placing detail props : 0...1...2...3...4...5...6...7...8...9...10
+Compacting texture/material tables...
+Reduced 623 texinfos to 310
+Reduced 43 texdatas to 32 (1133 bytes to 718)
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+16 threads
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt
+ 342 portalclusters
+1347 numportals
+BasePortalVis:       0...1...2...3...4...5...6...7...8...9...10 (0)
+Optimized: 309 visible clusters (0.27%)
+Total clusters visible: 114743
+Average clusters visible: 335
+Building PAS...
+Average clusters audible: 340
+visdatasize:32082  compressed from 32832
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (0)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (0)
+transfers 1197212, max 421
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0032 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (1)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (1)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   2/4096           96/196608   ( 0.0%) 
+brushes                205/65535        2460/786420   ( 0.3%) 
+brushsides            1793/655350      14344/5242800  ( 0.3%) 
+planes                1448/65536       28960/1310720  ( 2.2%) 
+vertexes              1379/65536       16548/786432   ( 2.1%) 
+nodes                  550/65536       17600/2097152  ( 0.8%) 
+texinfos               310/16384       22320/1179648  ( 1.9%) 
+texdata                 32/8192         1024/262144   ( 0.4%) 
+dispinfos               26/0            4576/0        ( 0.0%) 
+disp_verts             706/0           14120/0        ( 0.0%) 
+disp_tris              928/0            1856/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      159984/0          159984/0        ( 0.0%) 
+faces                  855/65536       47880/3670016  ( 1.3%) 
+hdr faces                0/65536           0/3670016  ( 0.0%) 
+origfaces              555/65536       31080/3670016  ( 0.8%) 
+leaves                 553/65536       17696/2097152  ( 0.8%) 
+leaffaces             1096/65536        2192/131072   ( 1.7%) 
+leafbrushes            571/65536        1142/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6192/512000      24768/2048000  ( 1.2%) 
+edges                 3694/256000      14776/1024000  ( 1.4%) 
+LDR worldlights         20/8192         1760/720896   ( 0.2%) 
+HDR worldlights          0/8192            0/720896   ( 0.0%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             64/32768         640/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices           996/65536        1992/131072   ( 1.5%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      625708/0        ( 0.0%) 
+HDR lightdata         [variable]           0/0        ( 0.0%) 
+visdata               [variable]       32082/16777216 ( 0.2%) 
+entdata               [variable]       27787/4194304  ( 0.7%) 
+LDR ambient table      553/65536        2212/262144   ( 0.8%) 
+HDR ambient table      553/65536        2212/262144   ( 0.8%) 
+LDR leaf ambient      3467/65536       97076/1835008  ( 5.3%) 
+HDR leaf ambient       553/65536       15484/1835008  ( 0.8%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        4884/0        ( 0.0%) 
+static prop count       43/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19170/0        ( 0.0%) 
+physics               [variable]       78476/4194304  ( 1.9%) 
+physics terrain       [variable]        4040/1048576  ( 0.4%) 
+
+Level flags = 0
+
+Total triangle count: 2258
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+2 seconds elapsed
+
+
+
+
+materialPath: G:\SteamLibrary\steamapps\common\GarrysMod\garrysmod\materials
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.vmf
+Patching WVT material: maps/bicycle_test_prison/nature/blendgrassgravel001b_wvt_patch
+fixing up env_cubemap materials on brush sides...
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+Processing areas...done (0)
+Building Faces...done (0)
+Chop Details...done (0)
+Find Visible Detail Sides...
+Merged 8 detail faces...done (0)
+Merging details...done (0)
+FixTjuncs...
+PruneNodes...
+WriteBSP...
+done (0)
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt...
+Building visibility clusters...
+done (0)
+Creating default LDR cubemaps for env_cubemap using skybox materials:
+   skybox/sky_day02_09_hdr*.vmt
+ ! Run buildcubemaps in the engine to get the correct cube maps.
+*** Error: Skybox vtf files for skybox/sky_day02_09_hdr weren't compiled with the same size texture and/or same flags!
+Can't load skybox file skybox/sky_day02_09_hdr to build the default cubemap!
+Finding displacement neighbors...
+Finding lightmap sample positions...
+Displacement Alpha : 0...1...2...3...4...5...6...7...8...9...10
+Building Physics collision data...
+done (0) (78476 bytes)
+Placing detail props : 0...1...2...3...4...5...6...7...8...9...10
+Compacting texture/material tables...
+Reduced 623 texinfos to 310
+Reduced 43 texdatas to 32 (1133 bytes to 718)
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+16 threads
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt
+ 342 portalclusters
+1347 numportals
+BasePortalVis:       0...1...2...3...4...5...6...7...8...9...10 (0)
+Optimized: 309 visible clusters (0.27%)
+Total clusters visible: 114743
+Average clusters visible: 335
+Building PAS...
+Average clusters audible: 340
+visdatasize:32082  compressed from 32832
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (0)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (0)
+transfers 1197212, max 421
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0033 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (1)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (1)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   2/4096           96/196608   ( 0.0%) 
+brushes                205/65535        2460/786420   ( 0.3%) 
+brushsides            1793/655350      14344/5242800  ( 0.3%) 
+planes                1448/65536       28960/1310720  ( 2.2%) 
+vertexes              1379/65536       16548/786432   ( 2.1%) 
+nodes                  550/65536       17600/2097152  ( 0.8%) 
+texinfos               310/16384       22320/1179648  ( 1.9%) 
+texdata                 32/8192         1024/262144   ( 0.4%) 
+dispinfos               26/0            4576/0        ( 0.0%) 
+disp_verts             706/0           14120/0        ( 0.0%) 
+disp_tris              928/0            1856/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      159984/0          159984/0        ( 0.0%) 
+faces                  855/65536       47880/3670016  ( 1.3%) 
+hdr faces                0/65536           0/3670016  ( 0.0%) 
+origfaces              555/65536       31080/3670016  ( 0.8%) 
+leaves                 553/65536       17696/2097152  ( 0.8%) 
+leaffaces             1096/65536        2192/131072   ( 1.7%) 
+leafbrushes            571/65536        1142/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6192/512000      24768/2048000  ( 1.2%) 
+edges                 3694/256000      14776/1024000  ( 1.4%) 
+LDR worldlights         20/8192         1760/720896   ( 0.2%) 
+HDR worldlights          0/8192            0/720896   ( 0.0%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             64/32768         640/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices           996/65536        1992/131072   ( 1.5%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      625708/0        ( 0.0%) 
+HDR lightdata         [variable]           0/0        ( 0.0%) 
+visdata               [variable]       32082/16777216 ( 0.2%) 
+entdata               [variable]       27782/4194304  ( 0.7%) 
+LDR ambient table      553/65536        2212/262144   ( 0.8%) 
+HDR ambient table      553/65536        2212/262144   ( 0.8%) 
+LDR leaf ambient      3488/65536       97664/1835008  ( 5.3%) 
+HDR leaf ambient       553/65536       15484/1835008  ( 0.8%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        4884/0        ( 0.0%) 
+static prop count       43/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19170/0        ( 0.0%) 
+physics               [variable]       78476/4194304  ( 1.9%) 
+physics terrain       [variable]        4040/1048576  ( 0.4%) 
+
+Level flags = 0
+
+Total triangle count: 2258
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+2 seconds elapsed
+
+
+
+
+materialPath: G:\SteamLibrary\steamapps\common\GarrysMod\garrysmod\materials
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.vmf
+Patching WVT material: maps/bicycle_test_prison/nature/blendgrassgravel001b_wvt_patch
+fixing up env_cubemap materials on brush sides...
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+Processing areas...done (0)
+Building Faces...done (0)
+Chop Details...done (0)
+Find Visible Detail Sides...
+Merged 8 detail faces...done (0)
+Merging details...done (0)
+FixTjuncs...
+PruneNodes...
+WriteBSP...
+done (0)
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt...
+Building visibility clusters...
+done (0)
+Creating default LDR cubemaps for env_cubemap using skybox materials:
+   skybox/sky_day02_09_hdr*.vmt
+ ! Run buildcubemaps in the engine to get the correct cube maps.
+*** Error: Skybox vtf files for skybox/sky_day02_09_hdr weren't compiled with the same size texture and/or same flags!
+Can't load skybox file skybox/sky_day02_09_hdr to build the default cubemap!
+Finding displacement neighbors...
+Finding lightmap sample positions...
+Displacement Alpha : 0...1...2...3...4...5...6...7...8...9...10
+Building Physics collision data...
+WARNING: Map using power 4 displacements, terrain physics cannot be compressed, map will need additional memory and CPU.
+done (0) (348118 bytes)
+Placing detail props : 0...1...2...3...4...5...6...7...8...9...10
+Compacting texture/material tables...
+Reduced 623 texinfos to 310
+Reduced 43 texdatas to 32 (1133 bytes to 718)
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+16 threads
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt
+ 342 portalclusters
+1347 numportals
+BasePortalVis:       0...1...2...3...4...5...6...7...8...9...10 (0)
+Optimized: 309 visible clusters (0.27%)
+Total clusters visible: 114743
+Average clusters visible: 335
+Building PAS...
+Average clusters audible: 340
+visdatasize:32082  compressed from 32832
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (0)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (0)
+transfers 1183769, max 425
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0031 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (1)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (1)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   2/4096           96/196608   ( 0.0%) 
+brushes                205/65535        2460/786420   ( 0.3%) 
+brushsides            1793/655350      14344/5242800  ( 0.3%) 
+planes                1448/65536       28960/1310720  ( 2.2%) 
+vertexes              1379/65536       16548/786432   ( 2.1%) 
+nodes                  550/65536       17600/2097152  ( 0.8%) 
+texinfos               310/16384       22320/1179648  ( 1.9%) 
+texdata                 32/8192         1024/262144   ( 0.4%) 
+dispinfos               26/0            4576/0        ( 0.0%) 
+disp_verts            1498/0           29960/0        ( 0.0%) 
+disp_tris             2368/0            4736/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      164778/0          164778/0        ( 0.0%) 
+faces                  855/65536       47880/3670016  ( 1.3%) 
+hdr faces                0/65536           0/3670016  ( 0.0%) 
+origfaces              555/65536       31080/3670016  ( 0.8%) 
+leaves                 553/65536       17696/2097152  ( 0.8%) 
+leaffaces             1096/65536        2192/131072   ( 1.7%) 
+leafbrushes            571/65536        1142/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6192/512000      24768/2048000  ( 1.2%) 
+edges                 3694/256000      14776/1024000  ( 1.4%) 
+LDR worldlights         20/8192         1760/720896   ( 0.2%) 
+HDR worldlights          0/8192            0/720896   ( 0.0%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             64/32768         640/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices           996/65536        1992/131072   ( 1.5%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      625708/0        ( 0.0%) 
+HDR lightdata         [variable]           0/0        ( 0.0%) 
+visdata               [variable]       32082/16777216 ( 0.2%) 
+entdata               [variable]       27782/4194304  ( 0.7%) 
+LDR ambient table      553/65536        2212/262144   ( 0.8%) 
+HDR ambient table      553/65536        2212/262144   ( 0.8%) 
+LDR leaf ambient      3477/65536       97356/1835008  ( 5.3%) 
+HDR leaf ambient       553/65536       15484/1835008  ( 0.8%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        4884/0        ( 0.0%) 
+static prop count       43/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19170/0        ( 0.0%) 
+physics               [variable]      348118/4194304  ( 8.3%) 
+physics terrain       [variable]           0/1048576  ( 0.0%) 
+
+Level flags = 0
+
+Total triangle count: 2258
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+2 seconds elapsed
+
+
+
+
+materialPath: G:\SteamLibrary\steamapps\common\GarrysMod\garrysmod\materials
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.vmf
+Patching WVT material: maps/bicycle_test_prison/nature/blendgrassgravel001b_wvt_patch
+fixing up env_cubemap materials on brush sides...
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+Processing areas...done (0)
+Building Faces...done (0)
+Chop Details...done (0)
+Find Visible Detail Sides...
+Merged 8 detail faces...done (0)
+Merging details...done (0)
+FixTjuncs...
+PruneNodes...
+WriteBSP...
+done (0)
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt...
+Building visibility clusters...
+done (0)
+Creating default LDR cubemaps for env_cubemap using skybox materials:
+   skybox/sky_day02_09_hdr*.vmt
+ ! Run buildcubemaps in the engine to get the correct cube maps.
+*** Error: Skybox vtf files for skybox/sky_day02_09_hdr weren't compiled with the same size texture and/or same flags!
+Can't load skybox file skybox/sky_day02_09_hdr to build the default cubemap!
+Finding displacement neighbors...
+Finding lightmap sample positions...
+Displacement Alpha : 0...1...2...3...4...5...6...7...8...9...10
+Building Physics collision data...
+WARNING: Map using power 4 displacements, terrain physics cannot be compressed, map will need additional memory and CPU.
+done (0) (290350 bytes)
+Placing detail props : 0...1...2...3...4...5...6...7...8...9...10
+Compacting texture/material tables...
+Reduced 621 texinfos to 312
+Reduced 45 texdatas to 33 (1220 bytes to 746)
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+16 threads
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt
+ 358 portalclusters
+1417 numportals
+BasePortalVis:       0...1...2...3...4...5...6...7...8...9...10 (0)
+Optimized: 282 visible clusters (0.22%)
+Total clusters visible: 125842
+Average clusters visible: 351
+Building PAS...
+Average clusters audible: 356
+visdatasize:35015  compressed from 34368
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (0)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (0)
+transfers 1376664, max 445
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0033 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (0)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (1)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   2/4096           96/196608   ( 0.0%) 
+brushes                206/65535        2472/786420   ( 0.3%) 
+brushsides            1812/655350      14496/5242800  ( 0.3%) 
+planes                1474/65536       29480/1310720  ( 2.2%) 
+vertexes              1426/65536       17112/786432   ( 2.2%) 
+nodes                  574/65536       18368/2097152  ( 0.9%) 
+texinfos               312/16384       22464/1179648  ( 1.9%) 
+texdata                 33/8192         1056/262144   ( 0.4%) 
+dispinfos               25/0            4400/0        ( 0.0%) 
+disp_verts            1209/0           24180/0        ( 0.0%) 
+disp_tris             1856/0            3712/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      134824/0          134824/0        ( 0.0%) 
+faces                  887/65536       49672/3670016  ( 1.4%) 
+hdr faces                0/65536           0/3670016  ( 0.0%) 
+origfaces              562/65536       31472/3670016  ( 0.9%) 
+leaves                 577/65536       18464/2097152  ( 0.9%) 
+leaffaces             1150/65536        2300/131072   ( 1.8%) 
+leafbrushes            579/65536        1158/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6376/512000      25504/2048000  ( 1.2%) 
+edges                 3784/256000      15136/1024000  ( 1.5%) 
+LDR worldlights         20/8192         1760/720896   ( 0.2%) 
+HDR worldlights          0/8192            0/720896   ( 0.0%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             72/32768         720/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices          1092/65536        2184/131072   ( 1.7%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      728248/0        ( 0.0%) 
+HDR lightdata         [variable]           0/0        ( 0.0%) 
+visdata               [variable]       35015/16777216 ( 0.2%) 
+entdata               [variable]       27782/4194304  ( 0.7%) 
+LDR ambient table      577/65536        2308/262144   ( 0.9%) 
+HDR ambient table      577/65536        2308/262144   ( 0.9%) 
+LDR leaf ambient      3762/65536      105336/1835008  ( 5.7%) 
+HDR leaf ambient       577/65536       16156/1835008  ( 0.9%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        4904/0        ( 0.0%) 
+static prop count       43/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19530/0        ( 0.0%) 
+physics               [variable]      290350/4194304  ( 6.9%) 
+physics terrain       [variable]           0/1048576  ( 0.0%) 
+
+Level flags = 0
+
+Total triangle count: 2350
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+2 seconds elapsed
+
+
+
+
+materialPath: G:\SteamLibrary\steamapps\common\GarrysMod\garrysmod\materials
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.vmf
+Patching WVT material: maps/bicycle_test_prison/nature/blendgrassgravel001b_wvt_patch
+fixing up env_cubemap materials on brush sides...
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+Processing areas...done (0)
+Building Faces...done (0)
+Chop Details...done (0)
+Find Visible Detail Sides...
+Merged 8 detail faces...done (0)
+Merging details...done (0)
+FixTjuncs...
+PruneNodes...
+WriteBSP...
+done (0)
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt...
+Building visibility clusters...
+done (0)
+Creating default LDR cubemaps for env_cubemap using skybox materials:
+   skybox/sky_day02_09_hdr*.vmt
+ ! Run buildcubemaps in the engine to get the correct cube maps.
+*** Error: Skybox vtf files for skybox/sky_day02_09_hdr weren't compiled with the same size texture and/or same flags!
+Can't load skybox file skybox/sky_day02_09_hdr to build the default cubemap!
+Finding displacement neighbors...
+Finding lightmap sample positions...
+Displacement Alpha : 0...1...2...3...4...5...6...7...8...9...10
+Building Physics collision data...
+WARNING: Map using power 4 displacements, terrain physics cannot be compressed, map will need additional memory and CPU.
+done (0) (290350 bytes)
+Placing detail props : 0...1...2...3...4...5...6...7...8...9...10
+Compacting texture/material tables...
+Reduced 621 texinfos to 312
+Reduced 45 texdatas to 33 (1220 bytes to 746)
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+16 threads
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt
+ 355 portalclusters
+1421 numportals
+BasePortalVis:       0...1...2...3...4...5...6...7...8...9...10 (0)
+Optimized: 221 visible clusters (0.18%)
+Total clusters visible: 123968
+Average clusters visible: 349
+Building PAS...
+Average clusters audible: 353
+visdatasize:34717  compressed from 34080
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (0)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (0)
+transfers 1344181, max 445
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0032 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (1)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (1)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   2/4096           96/196608   ( 0.0%) 
+brushes                206/65535        2472/786420   ( 0.3%) 
+brushsides            1813/655350      14504/5242800  ( 0.3%) 
+planes                1478/65536       29560/1310720  ( 2.3%) 
+vertexes              1429/65536       17148/786432   ( 2.2%) 
+nodes                  570/65536       18240/2097152  ( 0.9%) 
+texinfos               312/16384       22464/1179648  ( 1.9%) 
+texdata                 33/8192         1056/262144   ( 0.4%) 
+dispinfos               25/0            4400/0        ( 0.0%) 
+disp_verts            1209/0           24180/0        ( 0.0%) 
+disp_tris             1856/0            3712/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      134824/0          134824/0        ( 0.0%) 
+faces                  888/65536       49728/3670016  ( 1.4%) 
+hdr faces                0/65536           0/3670016  ( 0.0%) 
+origfaces              562/65536       31472/3670016  ( 0.9%) 
+leaves                 573/65536       18336/2097152  ( 0.9%) 
+leaffaces             1149/65536        2298/131072   ( 1.8%) 
+leafbrushes            578/65536        1156/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6375/512000      25500/2048000  ( 1.2%) 
+edges                 3786/256000      15144/1024000  ( 1.5%) 
+LDR worldlights         20/8192         1760/720896   ( 0.2%) 
+HDR worldlights          0/8192            0/720896   ( 0.0%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             66/32768         660/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices          1020/65536        2040/131072   ( 1.6%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      723908/0        ( 0.0%) 
+HDR lightdata         [variable]           0/0        ( 0.0%) 
+visdata               [variable]       34717/16777216 ( 0.2%) 
+entdata               [variable]       28687/4194304  ( 0.7%) 
+LDR ambient table      573/65536        2292/262144   ( 0.9%) 
+HDR ambient table      573/65536        2292/262144   ( 0.9%) 
+LDR leaf ambient      3746/65536      104888/1835008  ( 5.7%) 
+HDR leaf ambient       573/65536       16044/1835008  ( 0.9%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        4902/0        ( 0.0%) 
+static prop count       43/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19530/0        ( 0.0%) 
+physics               [variable]      290350/4194304  ( 6.9%) 
+physics terrain       [variable]           0/1048576  ( 0.0%) 
+
+Level flags = 0
+
+Total triangle count: 2347
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+2 seconds elapsed
+
+
+
+
+materialPath: G:\SteamLibrary\steamapps\common\GarrysMod\garrysmod\materials
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.vmf
+Patching WVT material: maps/bicycle_test_prison/nature/blendgrassgravel001b_wvt_patch
+fixing up env_cubemap materials on brush sides...
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+Processing areas...done (0)
+Building Faces...done (0)
+Chop Details...done (0)
+Find Visible Detail Sides...
+Merged 8 detail faces...done (0)
+Merging details...done (0)
+FixTjuncs...
+PruneNodes...
+WriteBSP...
+done (0)
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt...
+Building visibility clusters...
+done (0)
+Creating default LDR cubemaps for env_cubemap using skybox materials:
+   skybox/sky_day02_09_hdr*.vmt
+ ! Run buildcubemaps in the engine to get the correct cube maps.
+*** Error: Skybox vtf files for skybox/sky_day02_09_hdr weren't compiled with the same size texture and/or same flags!
+Can't load skybox file skybox/sky_day02_09_hdr to build the default cubemap!
+Finding displacement neighbors...
+Finding lightmap sample positions...
+Displacement Alpha : 0...1...2...3...4...5...6...7...8...9...10
+Building Physics collision data...
+WARNING: Map using power 4 displacements, terrain physics cannot be compressed, map will need additional memory and CPU.
+done (0) (290350 bytes)
+Placing detail props : 0...1...2...3...4...5...6...7...8...9...10
+Compacting texture/material tables...
+Reduced 621 texinfos to 312
+Reduced 45 texdatas to 33 (1220 bytes to 746)
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+16 threads
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt
+ 355 portalclusters
+1421 numportals
+BasePortalVis:       0...1...2...3...4...5...6...7...8...9...10 (0)
+Optimized: 221 visible clusters (0.18%)
+Total clusters visible: 123968
+Average clusters visible: 349
+Building PAS...
+Average clusters audible: 353
+visdatasize:34717  compressed from 34080
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (0)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (0)
+transfers 1344181, max 445
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0030 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (0)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (1)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   2/4096           96/196608   ( 0.0%) 
+brushes                206/65535        2472/786420   ( 0.3%) 
+brushsides            1813/655350      14504/5242800  ( 0.3%) 
+planes                1478/65536       29560/1310720  ( 2.3%) 
+vertexes              1429/65536       17148/786432   ( 2.2%) 
+nodes                  570/65536       18240/2097152  ( 0.9%) 
+texinfos               312/16384       22464/1179648  ( 1.9%) 
+texdata                 33/8192         1056/262144   ( 0.4%) 
+dispinfos               25/0            4400/0        ( 0.0%) 
+disp_verts            1209/0           24180/0        ( 0.0%) 
+disp_tris             1856/0            3712/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      134824/0          134824/0        ( 0.0%) 
+faces                  888/65536       49728/3670016  ( 1.4%) 
+hdr faces                0/65536           0/3670016  ( 0.0%) 
+origfaces              562/65536       31472/3670016  ( 0.9%) 
+leaves                 573/65536       18336/2097152  ( 0.9%) 
+leaffaces             1149/65536        2298/131072   ( 1.8%) 
+leafbrushes            578/65536        1156/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6375/512000      25500/2048000  ( 1.2%) 
+edges                 3786/256000      15144/1024000  ( 1.5%) 
+LDR worldlights         20/8192         1760/720896   ( 0.2%) 
+HDR worldlights          0/8192            0/720896   ( 0.0%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             66/32768         660/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices          1020/65536        2040/131072   ( 1.6%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      723908/0        ( 0.0%) 
+HDR lightdata         [variable]           0/0        ( 0.0%) 
+visdata               [variable]       34717/16777216 ( 0.2%) 
+entdata               [variable]       27782/4194304  ( 0.7%) 
+LDR ambient table      573/65536        2292/262144   ( 0.9%) 
+HDR ambient table      573/65536        2292/262144   ( 0.9%) 
+LDR leaf ambient      3746/65536      104888/1835008  ( 5.7%) 
+HDR leaf ambient       573/65536       16044/1835008  ( 0.9%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        4902/0        ( 0.0%) 
+static prop count       43/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19530/0        ( 0.0%) 
+physics               [variable]      290350/4194304  ( 6.9%) 
+physics terrain       [variable]           0/1048576  ( 0.0%) 
+
+Level flags = 0
+
+Total triangle count: 2347
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+2 seconds elapsed
+
+
+
+
+materialPath: G:\SteamLibrary\steamapps\common\GarrysMod\garrysmod\materials
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.vmf
+Patching WVT material: maps/bicycle_test_prison/nature/blendgrassgravel001b_wvt_patch
+fixing up env_cubemap materials on brush sides...
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+ProcessBlock_Thread: 0...1...2...3...4...5...6...7...8...9...10 (0)
+Processing areas...done (0)
+Building Faces...done (0)
+Chop Details...done (0)
+Find Visible Detail Sides...
+Merged 8 detail faces...done (0)
+Merging details...done (0)
+FixTjuncs...
+PruneNodes...
+WriteBSP...
+done (0)
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt...
+Building visibility clusters...
+done (0)
+Creating default LDR cubemaps for env_cubemap using skybox materials:
+   skybox/sky_day02_09_hdr*.vmt
+ ! Run buildcubemaps in the engine to get the correct cube maps.
+*** Error: Skybox vtf files for skybox/sky_day02_09_hdr weren't compiled with the same size texture and/or same flags!
+Can't load skybox file skybox/sky_day02_09_hdr to build the default cubemap!
+Finding displacement neighbors...
+Finding lightmap sample positions...
+Displacement Alpha : 0...1...2...3...4...5...6...7...8...9...10
+Building Physics collision data...
+WARNING: Map using power 4 displacements, terrain physics cannot be compressed, map will need additional memory and CPU.
+done (0) (290270 bytes)
+Placing detail props : 0...1...2...3...4...5...6...7...8...9...10
+Compacting texture/material tables...
+Reduced 615 texinfos to 311
+Reduced 44 texdatas to 33 (1199 bytes to 746)
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+0 seconds elapsed
+
+
+
+16 threads
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+reading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.prt
+ 348 portalclusters
+1372 numportals
+BasePortalVis:       0...1...2...3...4...5...6...7...8...9...10 (0)
+PortalFlow:          0...1...2...3...4...5...6...7...8...9...10 (4)
+Optimized: 84 visible clusters (0.08%)
+Total clusters visible: 109990
+Average clusters visible: 316
+Building PAS...
+Average clusters audible: 346
+visdatasize:33201  compressed from 33408
+writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+4 seconds elapsed
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (5)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (0)
+transfers 1280703, max 451
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0033 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (1)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (1)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   1/4096           48/196608   ( 0.0%) 
+brushes                205/65535        2460/786420   ( 0.3%) 
+brushsides            1794/655350      14352/5242800  ( 0.3%) 
+planes                1428/65536       28560/1310720  ( 2.2%) 
+vertexes              1386/65536       16632/786432   ( 2.1%) 
+nodes                  555/65536       17760/2097152  ( 0.8%) 
+texinfos               311/16384       22392/1179648  ( 1.9%) 
+texdata                 33/8192         1056/262144   ( 0.4%) 
+dispinfos               25/0            4400/0        ( 0.0%) 
+disp_verts            1209/0           24180/0        ( 0.0%) 
+disp_tris             1856/0            3712/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      134824/0          134824/0        ( 0.0%) 
+faces                  868/65536       48608/3670016  ( 1.3%) 
+hdr faces                0/65536           0/3670016  ( 0.0%) 
+origfaces              561/65536       31416/3670016  ( 0.9%) 
+leaves                 557/65536       17824/2097152  ( 0.8%) 
+leaffaces             1128/65536        2256/131072   ( 1.7%) 
+leafbrushes            572/65536        1144/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6277/512000      25108/2048000  ( 1.2%) 
+edges                 3732/256000      14928/1024000  ( 1.5%) 
+LDR worldlights         21/8192         1848/720896   ( 0.3%) 
+HDR worldlights          0/8192            0/720896   ( 0.0%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             61/32768         610/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices           948/65536        1896/131072   ( 1.4%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      706624/0        ( 0.0%) 
+HDR lightdata         [variable]           0/0        ( 0.0%) 
+visdata               [variable]       33201/16777216 ( 0.2%) 
+entdata               [variable]       27436/4194304  ( 0.7%) 
+LDR ambient table      557/65536        2228/262144   ( 0.8%) 
+HDR ambient table      557/65536        2228/262144   ( 0.8%) 
+LDR leaf ambient      3608/65536      101024/1835008  ( 5.5%) 
+HDR leaf ambient       557/65536       15596/1835008  ( 0.8%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        4754/0        ( 0.0%) 
+static prop count       43/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19530/0        ( 0.0%) 
+physics               [variable]      290270/4194304  ( 6.9%) 
+physics terrain       [variable]           0/1048576  ( 0.0%) 
+
+Level flags = 0
+
+Total triangle count: 2293
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+7 seconds elapsed
+
+
+
+
+[Reading texlights from 'lights.rad']
+[51 texlights parsed from 'lights.rad']
+Loading e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+BuildFacelights:     0...1...2...3...4...5...6...7...8...9...10 (4)
+BuildVisLeafs:       0...1...2...3...4...5...6...7...8...9...10 (1)
+transfers 1280703, max 451
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+GatherLight:         0...1...2...3...4...5...6...7...8...9...10 (0)
+Build Patch/Sample Hash Table(s).....Done<0.0032 sec>
+FinalLightFace:      0...1...2...3...4...5...6...7...8...9...10 (0)
+FinalLightFace Done
+Computing detail prop lighting : 0...1...2...3...4...5...6...7...8...9...10
+0 of 0 (0% of) surface lights went in leaf ambient cubes.
+ThreadComputeLeafAmbient: 0...1...2...3...4...5...6...7...8...9...10 (2)
+Writing leaf ambient...done
+Ready to Finish
+
+Object names       Objects/Maxobjs  Memory / Maxmem  Fullness 
+------------       ---------------  ---------------  -------- 
+models                   1/4096           48/196608   ( 0.0%) 
+brushes                205/65535        2460/786420   ( 0.3%) 
+brushsides            1794/655350      14352/5242800  ( 0.3%) 
+planes                1428/65536       28560/1310720  ( 2.2%) 
+vertexes              1386/65536       16632/786432   ( 2.1%) 
+nodes                  555/65536       17760/2097152  ( 0.8%) 
+texinfos               311/16384       22392/1179648  ( 1.9%) 
+texdata                 33/8192         1056/262144   ( 0.4%) 
+dispinfos               25/0            4400/0        ( 0.0%) 
+disp_verts            1209/0           24180/0        ( 0.0%) 
+disp_tris             1856/0            3712/0        ( 0.0%) 
+disp_multiblend          0/0               0/0        ( 0.0%) 
+disp_lmsamples      134824/0          134824/0        ( 0.0%) 
+faces                  868/65536       48608/3670016  ( 1.3%) 
+hdr faces              868/65536       48608/3670016  ( 1.3%) 
+origfaces              561/65536       31416/3670016  ( 0.9%) 
+leaves                 557/65536       17824/2097152  ( 0.8%) 
+leaffaces             1128/65536        2256/131072   ( 1.7%) 
+leafbrushes            572/65536        1144/131072   ( 0.9%) 
+areas                    3/1024           24/8192     ( 0.3%) 
+surfedges             6277/512000      25108/2048000  ( 1.2%) 
+edges                 3732/256000      14928/1024000  ( 1.5%) 
+LDR worldlights         21/8192         1848/720896   ( 0.3%) 
+HDR worldlights         21/8192         1848/720896   ( 0.3%) 
+leafwaterdata            0/32768           0/393216   ( 0.0%) 
+waterstrips             61/32768         610/327680   ( 0.2%) 
+waterverts               0/65536           0/786432   ( 0.0%) 
+waterindices           948/65536        1896/131072   ( 1.4%) 
+cubemapsamples           0/1024            0/16384    ( 0.0%) 
+overlays                 6/8192         2112/2883584  ( 0.1%) 
+LDR lightdata         [variable]      706624/0        ( 0.0%) 
+HDR lightdata         [variable]      706624/0        ( 0.0%) 
+visdata               [variable]       33201/16777216 ( 0.2%) 
+entdata               [variable]       27436/4194304  ( 0.7%) 
+LDR ambient table      557/65536        2228/262144   ( 0.8%) 
+HDR ambient table      557/65536        2228/262144   ( 0.8%) 
+LDR leaf ambient      3608/65536      101024/1835008  ( 5.5%) 
+HDR leaf ambient      3458/65536       96824/1835008  ( 5.3%) 
+occluders                0/0               0/0        ( 0.0%) 
+occluder polygons        0/0               0/0        ( 0.0%) 
+occluder vert ind        0/0               0/0        ( 0.0%) 
+detail props          [variable]       71840/0        ( 0.0%) 
+dtl prp lght          [variable]           4/0        ( 0.0%) 
+HDR dtl prp lght      [variable]           4/0        ( 0.0%) 
+static props          [variable]        4754/0        ( 0.0%) 
+static prop count       43/16384           0/0        ( 0.3%) 
+pakfile               [variable]       19530/0        ( 0.0%) 
+physics               [variable]      290270/4194304  ( 6.9%) 
+physics terrain       [variable]           0/1048576  ( 0.0%) 
+
+Level flags = 0
+
+Total triangle count: 2293
+Writing e:\projects\_personal\gmod\bicycle\mapsrc\bicycle_test_prison.bsp
+7 seconds elapsed
+

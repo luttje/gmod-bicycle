@@ -81,6 +81,44 @@ function bicycle.ik.getBonePosition(entity, bone)
   return matrix and matrix:GetTranslation()
 end
 
+--- Turns `bones` around the line through `pivot` along `axis`. Only the bones listed are moved.
+--- @param bones number[]
+--- @param pivot Vector World space
+--- @param axis Vector World space, normalized
+--- @param degrees number Counter-clockwise looking down the axis
+function bicycle.ik.rotateAround(entity, bones, pivot, axis, degrees)
+  local rotation = Angle(0, 0, 0)
+  rotation:RotateAroundAxis(axis, degrees)
+
+  local delta = Matrix()
+  delta:Translate(pivot)
+  delta:Rotate(rotation)
+  delta:Translate(-pivot)
+
+  for _, bone in ipairs(bones) do
+    local matrix = entity:GetBoneMatrix(bone)
+
+    if (matrix) then
+      entity:SetBoneMatrix(bone, delta * matrix)
+    end
+  end
+end
+
+--- @param point Vector World space
+--- @param pivot Vector World space
+--- @param axis Vector World space, normalized
+--- @param degrees number Counter-clockwise looking down the axis
+--- @return Vector # `point` turned around the line through `pivot` along `axis`
+function bicycle.ik.rotatePointAround(point, pivot, axis, degrees)
+  local rotation = Angle(0, 0, 0)
+  rotation:RotateAroundAxis(axis, degrees)
+
+  local offset = point - pivot
+  offset:Rotate(rotation)
+
+  return pivot + offset
+end
+
 --- Rotates `bone` around its own position by the shortest turn from direction `from` to direction `to`, carrying every
 --- bone below it along.
 --- @param from Vector World space
@@ -103,24 +141,16 @@ function bicycle.ik.aimBone(entity, bone, from, to)
 
   axis:Div(sine)
 
-  local rotation = Angle(0, 0, 0)
-  rotation:RotateAroundAxis(axis, math.deg(math.atan2(sine, fromNormal:Dot(toNormal))))
+  local bones = { bone }
+  table.Add(bones, bicycle.ik.getDescendants(entity, bone))
 
-  local pivot = matrix:GetTranslation()
-  local delta = Matrix()
-  delta:Translate(pivot)
-  delta:Rotate(rotation)
-  delta:Translate(-pivot)
-
-  entity:SetBoneMatrix(bone, delta * matrix)
-
-  for _, descendant in ipairs(bicycle.ik.getDescendants(entity, bone)) do
-    local descendantMatrix = entity:GetBoneMatrix(descendant)
-
-    if (descendantMatrix) then
-      entity:SetBoneMatrix(descendant, delta * descendantMatrix)
-    end
-  end
+  bicycle.ik.rotateAround(
+    entity,
+    bones,
+    matrix:GetTranslation(),
+    axis,
+    math.deg(math.atan2(sine, fromNormal:Dot(toNormal)))
+  )
 end
 
 --- Bends a two bone limb (thigh and calf, upper arm and forearm) so that `endBone` reaches `target`, with the middle

@@ -10,9 +10,14 @@ bicycle.ENTITY_CLASS = "sent_bicycle"
 
 --- Includes a file from lua/bicycle/, sending it to clients and/or running it depending on its cl_, sh_ or sv_ prefix.
 --- @param fileName string
-function bicycle.includePrefixed(fileName)
+--- @param directory string? Optional subdirectory of lua/bicycle/ to include from
+function bicycle.includePrefixed(fileName, directory)
   local prefix = fileName:sub(1, 3)
-  local path = "bicycle/" .. fileName
+
+  directory = directory or ""
+  directory = directory:EndsWith("/") and directory or directory .. "/"
+
+  local path = "bicycle/" .. directory .. fileName
 
   if (prefix ~= "cl_" and prefix ~= "sh_" and prefix ~= "sv_") then
     ErrorNoHaltWithStack("Error on includePrefixed: File not prefixed with cl_, sh_ or sv_! File was: " .. path)
@@ -31,6 +36,7 @@ end
 bicycle.includePrefixed("sh_config.lua")
 bicycle.includePrefixed("sh_permissions.lua")
 bicycle.includePrefixed("sh_models.lua")
+bicycle.includePrefixed("sh_tricks.lua")
 bicycle.includePrefixed("sh_hooks.lua")
 bicycle.includePrefixed("sh_editor.lua")
 

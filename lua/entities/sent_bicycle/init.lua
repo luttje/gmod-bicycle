@@ -3,6 +3,7 @@ AddCSLuaFile("cl_init.lua")
 
 include("shared.lua")
 include("sv_ride.lua")
+include("sv_tricks.lua")
 
 local SPAWN_HEIGHT = 24
 
@@ -119,6 +120,7 @@ function ENT:Initialize()
   self.forwardLeanFraction = 0
   self.isWheelieing = false
   self.isStoppieing = false
+  self.trickStates = {}
 
   self:StartMotionController()
   self:CreateSeat()
@@ -510,6 +512,7 @@ function ENT:OnRiderLeave(player)
 
   self:SetRider(NULL)
   self:UpdateMass(false)
+  self:ResetTricks()
   self.steerFraction = 0
   player._BicycleNextUseAt = CurTime() + USE_COOLDOWN_AFTER_LEAVING
 
@@ -737,6 +740,7 @@ end
 
 function ENT:Think()
   self:HandlePendingImpacts()
+  self:HandleLandedTricks()
   self:HandlePendingSounds()
   self:ValidateRider()
   self:UpdateSeatPose()
