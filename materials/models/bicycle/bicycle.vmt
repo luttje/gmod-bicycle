@@ -3,8 +3,8 @@
 	"$basetexture" "models/bicycle/bicycle"
 	"$bumpmap" "models/bicycle/bicycle_normal"
 	"$surfaceprop" "metal"
-  
-  "$blendtintbybasealpha" 1
+
+	"$blendtintbybasealpha" 1
 
 	// The normal map's alpha is the model's smoothness, used as the phong mask.
 	"$phong" "1"

@@ -102,9 +102,11 @@ Want to add your own bikes or tricks, or have your gamemode react to bikes? The
 To build a bike model from scratch, see [📚 `MODELING_GUIDE.md`](MODELING_GUIDE.md).
 
 ## Credits
-The bike model is "Bicycle Game Asset" (https://skfb.ly/oyZ6w) by RayznGames is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/)
+The `models/bicycle/bicycle.mdl`/`modelsrc/source/bicycle.fbx` model is "Bicycle Game Asset" (https://skfb.ly/oyZ6w) by RayznGames is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/)
 
-Changes made to this asset:
+The `models/bicycle/bmx.mdl`/`modelsrc/source/bmx.fbx` model is "Bmx Bike" (https://skfb.ly/YWSG) by Grimecent is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+Changes made to both these assets:
 - The texture was modified to be gray (instead of orange) to be better recolorable in-game.
 - The model was modified (meshes were merged)
 - An armature was added to the model to allow it to be animated.
