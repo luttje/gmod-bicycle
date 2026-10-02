@@ -36,14 +36,14 @@ Knocked the bike over? Press **E** on it and it stands back up when you get on.
 | R | Ring the bell |
 | E | Get off |
 
-> [!HINT]
+> [!TIP]
 > Prefer riding in third person? Turn on **Third person** under **Options → Bicycle → Client**, or run
 > `bicycle_cam_third_person 1` in the console.
 
-> [!HINT]
+> [!TIP]
 > Hitting something hard enough will throw you over the handlebars.
 
-> [!HINT]
+> [!TIP]
 > Water slows you down, and riding in until the bike is half under throws you off. Server admins can change both, or turn
 > the throwing off, under **Water** in the server settings.
 
@@ -59,10 +59,10 @@ Knocked the bike over? Press **E** on it and it stands back up when you get on.
 | Can-can | In the air | Ctrl + A / D | Left / right leg. Lasts as long as you hold it |
 | X-up | In the air or in a wheelie | Right mouse + W | Lasts as long as you hold it |
 
-> [!HINT]
+> [!TIP]
 > Land your tricks straight: touching down more than 45° off throws you off. Let go of the buttons early and the spin finishes the turn by itself.
 
-> [!HINT]
+> [!TIP]
 > Tricks combine: try a backflip no-hander by double-tapping S, then holding Ctrl + W.
 
 ## Settings
@@ -74,10 +74,10 @@ Open the spawn menu and go to **Options → Bicycle**. Changes apply straight aw
   Only the host or an admin can change these, and they reset to the defaults every time the server restarts. Admins can
   also turn all bike sounds off, or just the bell, or give the bell a cooldown under **Sounds**.
 
-> [!HINT]
+> [!TIP]
 > If you modify any server ConVars and want to automatically persist them in `cfg/server.vdf`: run the command `host_writeconfig_lua` in the server console (or add the relevant ConVars to your `cfg/server.cfg` file)
 
-> [!HINT]
+> [!TIP]
 > Changed too much? Run `bicycle_reset_client` in the console to restore your own settings, or `bicycle_reset_tuning`
 (admins) to restore the server settings.
 
