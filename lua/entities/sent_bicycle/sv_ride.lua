@@ -83,10 +83,6 @@ local function getBlendFraction(rate, deltaTime)
   return 1 - math.exp(-rate * deltaTime)
 end
 
-local function getDirection(speed)
-  return speed > 0 and 1 or -1
-end
-
 local function projectOntoPlane(direction, normal)
   local projected = direction - normal * direction:Dot(normal)
   projected:Normalize()
@@ -207,6 +203,7 @@ function ENT:MeasureRide(physics, rider)
     mass = physics:GetMass(),
     massCenter = physics:GetMassCenter(),
     gravity = getGravity(),
+    gravityVector = physenv.GetGravity(),
     -- How far the bike is under water, 0-1
     waterFraction = self:WaterLevel() / WATER_LEVEL_SUBMERGED,
     isRidden = isRidden,
@@ -234,20 +231,31 @@ function ENT:ApplyTyreSpring(physics, ride, wheel, contact, deltaTime)
   acceleration = math.min(acceleration, ride.gravity * MAX_SUSPENSION_GRAVITIES)
 
   local forcePosition = contact.contactPosition
+  local force = normal * (acceleration * ride.mass * deltaTime)
 
   if (ride.isWheelieing or ride.isStoppieing) then
     forcePosition = physics:LocalToWorld(ride.massCenter)
   elseif (ride.isControlled) then
     forcePosition = physics:LocalToWorld(Vector(wheel.position.x, ride.massCenter.y, ride.massCenter.z))
+
+    -- Only the part along the shared ground normal pushes there. Where the tyres touch differently
+    -- sloped ground, such as either side of a crest, the rest would push the ends of the bike different
+    -- ways and slowly turn it, so it pushes through the centre of mass instead.
+    local support = ride.groundNormal * force:Dot(ride.groundNormal)
+
+    physics:ApplyForceCenter(force - support)
+    force = support
   end
 
-  physics:ApplyForceOffset(normal * (acceleration * ride.mass * deltaTime), forcePosition)
+  physics:ApplyForceOffset(force, forcePosition)
 end
 
 --- Springs each grounded tyre and adds what the tyres touch to `ride`: the ground normal, which wheels are down and
---- the bike's heading and speed along the ground.
+--- the bike's heading and speed along the ground. All tyres are traced before any is sprung, since the springs need
+--- the ground normal they share.
 function ENT:ApplyTyreSuspension(physics, ride, deltaTime)
   local groundNormalSum = Vector(0, 0, 0)
+  local groundedContacts = {}
 
   ride.groundedCount = 0
   ride.isFrontGrounded = false
@@ -269,12 +277,17 @@ function ENT:ApplyTyreSuspension(physics, ride, deltaTime)
         end
 
         groundNormalSum:Add(contact.normal)
-        self:ApplyTyreSpring(physics, ride, wheel, contact, deltaTime)
+        groundedContacts[index] = contact
       end
     end
   end
 
   ride.groundNormal = ride.groundedCount > 0 and groundNormalSum:GetNormalized() or vector_up
+
+  for index, contact in pairs(groundedContacts) do
+    self:ApplyTyreSpring(physics, ride, self.Wheels[index], contact, deltaTime)
+  end
+
   ride.groundedFraction = ride.groundedCount / #self.Wheels
   ride.forwardAlongGround = projectOntoPlane(ride.forward, ride.groundNormal)
   ride.sideAlongGround = projectOntoPlane(ride.right, ride.groundNormal)
@@ -302,10 +315,17 @@ function ENT:UpdateSteering(steerDirection, absoluteSpeed, deltaTime)
   return self.steerFraction * maxSteerAngle
 end
 
+--- Like static friction: brings `speed` to a standstill this tick and holds it there against `slopeAcceleration` (the
+--- gravity pulling along that direction), but never pushes harder than `maxAcceleration` or past a standstill.
+--- @return number # Acceleration to apply (u/s^2)
+local function getHoldingAcceleration(speed, slopeAcceleration, maxAcceleration, deltaTime)
+  return math.Clamp(-speed / deltaTime - slopeAcceleration, -maxAcceleration, maxAcceleration)
+end
+
 function ENT:ApplyPedalsAndBrakes(physics, ride, input, isPedalling, deltaTime)
   local speed = ride.speed
-  -- Braking and resistance may stop the bike within a tick, but never push it the other way.
-  local stoppingAcceleration = ride.absoluteSpeed / deltaTime
+  -- Without holding against this, gravity would creep the bike down even a slight slope with the brakes on.
+  local slopeAcceleration = ride.gravityVector:Dot(ride.forwardAlongGround)
   local acceleration = 0
 
   if (isPedalling) then
@@ -325,17 +345,21 @@ function ENT:ApplyPedalsAndBrakes(physics, ride, input, isPedalling, deltaTime)
 
       acceleration = acceleration + math.Clamp(reverseCorrection, -brakeAcceleration, REVERSE_MAX_CORRECTION)
     else
-      local braking = math.min(brakeAcceleration * ride.groundedFraction, stoppingAcceleration)
-
-      acceleration = acceleration - braking * getDirection(speed)
+      acceleration = acceleration + getHoldingAcceleration(
+        speed,
+        slopeAcceleration,
+        brakeAcceleration * ride.groundedFraction,
+        deltaTime
+      )
     end
   elseif (not isPedalling) then
-    local resistance = math.min(
+    -- Rolling resistance holds the bike on slopes too gentle to overcome it, steeper ones roll it down.
+    acceleration = acceleration + getHoldingAcceleration(
+      speed,
+      slopeAcceleration,
       bicycle.getTuning("rolling") * ride.groundedFraction + bicycle.getTuning("drag") * speed * speed,
-      stoppingAcceleration
+      deltaTime
     )
-
-    acceleration = acceleration - resistance * getDirection(speed)
   end
 
   -- Wading slows the bike whatever the rider does. Taking a fraction of the speed never turns the bike around.
@@ -359,12 +383,14 @@ function ENT:TryBunnyHop(physics, ride)
   self.hasPendingHopSound = true
 end
 
---- Removes sideways slip, but never faster than tyre friction allows, so the bike can still slide.
+--- Removes sideways slip and holds the bike against gravity pulling it sideways down a slope, but never harder than
+--- tyre friction allows, so the bike can still slide.
 function ENT:ApplyTyreGrip(physics, ride, deltaTime)
   local sideSpeed = ride.velocity:Dot(ride.sideAlongGround)
+  local slopeSpeedChange = ride.gravityVector:Dot(ride.sideAlongGround) * deltaTime
   local maxSpeedChange = bicycle.getTuning("mu") * ride.gravity * ride.groundedFraction * deltaTime
   local speedChange = math.Clamp(
-    -sideSpeed * getBlendFraction(bicycle.getTuning("grip"), deltaTime),
+    -sideSpeed * getBlendFraction(bicycle.getTuning("grip"), deltaTime) - slopeSpeedChange,
     -maxSpeedChange,
     maxSpeedChange
   )
