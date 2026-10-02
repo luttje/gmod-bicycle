@@ -1,17 +1,33 @@
+// BMX for sent_bicycle. Exported from bmx.blend with Blender Source Tools, in meters.
+// Compile: studiomdl -game <GarrysMod>/garrysmod -nop4 bmx.qc
+
 $modelname "bicycle/bmx.mdl"
+
+// Same scale as bicycle.qc, so both bikes are sized against the player models alike.
+$scale 46
+
+// studiomdl turns every model 90 degrees around Z by default (made for models facing -Y). This one already faces +X,
+// so the rotation is cancelled out. Without it the mesh and collision model face +Y in game while the bones don't.
+$origin 0 0 0 -90
+
+$body "bmx" "bmx_ref.smd"
+
 $cdmaterials "models/bicycle/"
-$scale 39.37
+$surfaceprop "metal"
 
-$body "body" "bmx_ref.smd"
-$sequence "idle" "bmx_ref.smd" fps 1
+$sequence "idle" "bmx_ref.smd" fps 30
 
+// Zero offsets on the helper bones, so $scale can't move them.
 $attachment "seat"    "att_seat"   0 0 0
 $attachment "grip_L"  "att_grip_L" 0 0 0
 $attachment "grip_R"  "att_grip_R" 0 0 0
 $attachment "pedal_L" "pedal_L"    0 0 0
 $attachment "pedal_R" "pedal_R"    0 0 0
 
-$collisionmodel "bmx_phys.smd" {
-    $concave
-    $mass 15
+// Four convex pieces: frame box, handlebar box and two wheel discs. The code shrinks the discs into bump stops, the
+// tyres are simulated by traces.
+$collisionmodel "bmx_phys.smd"
+{
+	$mass 15
+	$concave
 }

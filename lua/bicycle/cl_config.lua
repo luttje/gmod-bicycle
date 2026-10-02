@@ -100,7 +100,7 @@ bicycle.clientSettingSections = {
       {
         name = "rider_ankling",
         label = "Ankling",
-        default = 45,
+        default = 10,
         min = 0,
         max = 60,
         description = "How much the heel drops at the front of the pedal stroke and lifts at the back (deg)",

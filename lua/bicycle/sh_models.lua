@@ -180,7 +180,7 @@ hook.Add("BicycleRegisterModels", "bicycle.defaultModel", function()
     mass = 15,
     gearRatio = 2.8,
     wheelHullScale = 0.7,
-    seatOffset = Vector(-7.02, 0, 0),
+    seatOffset = Vector(-7.02, 0, -1.75),
     seatPitch = 33.55,
     sprintLeanPitch = 25,
     wheelieLeanPitch = 0,
@@ -194,5 +194,31 @@ hook.Add("BicycleRegisterModels", "bicycle.defaultModel", function()
     rearHub = Vector(-22.57, 0, -1.74),
     frontHub = Vector(25.02, 0, -1.74),
     seatPosition = Vector(-12.42, 0.02, 21.16),
+  })
+end)
+
+hook.Add("BicycleRegisterModels", "bicycle.bmxModel", function()
+  bicycle.registerModel("bmx", {
+    name = "Colourable BMX",
+    model = "models/bicycle/bmx.mdl",
+    icon = "entities/colourable_mountain_bmx.png",
+    randomColor = true,
+    mass = 15,
+    gearRatio = 2.78,
+    wheelHullScale = 0.7,
+    seatOffset = Vector(-5.61, 0, 4.21),
+    seatPitch = 16.18,
+    sprintLeanPitch = 25,
+    wheelieLeanPitch = 0,
+    wheelieSeatShift = Vector(-1.93, 0, 1.58),
+    leanForwardPitch = 15,
+    leanForwardSeatShift = Vector(3, 0, 0.88),
+    pedalCenterOffset = 3.11,
+    footBallHeight = 0.12,
+    gripOffset = Vector(-0.35, 1.29, 0.47),
+    wheelRadius = 11.92,
+    rearHub = Vector(-22.93, 0, -7.06),
+    frontHub = Vector(20.22, 0, -7.06),
+    seatPosition = Vector(-12.46, 0, 13.82),
   })
 end)

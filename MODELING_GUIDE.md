@@ -124,7 +124,10 @@ The game uses a separate, very simple shape for collisions. Make **one object** 
 How to build it:
 - **Boxes:** Shift+A → Cube, then scale it around the part in Edit mode. A rough fit is fine.
 - **Wheels:** put the cursor on the hub (same trick as before), Shift+A → Cylinder, set **Vertices: 12**, rotate it 90° around X, and scale it to the tire's size.
-- Join the four pieces with **Ctrl+J**, name the object `bicycle_phys`, and skin all of it to the **`frame`** bone.
+- Join the four pieces with **Ctrl+J**, name the object `bicycle_phys`, and skin all of it to the **`frame`** bone
+  (the same way as in step 4).
+- The joined object keeps the location, rotation and scale of whichever piece was active, so press
+  **Ctrl+A → All Transforms** on it again. Otherwise the collision model ends up in the wrong spot.
 - Right-click → **Shade Smooth**. Otherwise the compiler can split the pieces into lots of little ones.
 
 Rules:
@@ -152,7 +155,8 @@ Save this next to your SMDs as `bicycle.qc`:
 ```
 $modelname "<yourname>/bicycle.mdl"
 $cdmaterials "models/<yourname>/bicycle/"
-$scale 39.37
+$scale 46
+$origin 0 0 0 -90
 
 $body "body" "bicycle_ref.smd"
 $sequence "idle" "bicycle_ref.smd" fps 1
@@ -169,7 +173,10 @@ $collisionmodel "bicycle_phys.smd" {
 }
 ```
 
-- **`$scale 39.37`** converts meters to Source units. That's the scale player models use, so your bike matches the rider.
+- **`$scale 46`** converts meters to Source units. That's the scale the included bikes use: a little larger than real
+  (39.37 would be exact), because at real size the rider's knees stay bent at the bottom of the pedal stroke.
+- **`$origin 0 0 0 -90`** cancels the 90° turn that studiomdl gives every model. Without it the mesh and collision
+  model face sideways in game while the bones still face forward.
 - The attachment offsets are all zero on purpose, because the `att_` bones already mark the exact spots.
 
 Compile with **Crowbar** (game: Garry's Mod) and open the result in **HLMV** to check it:

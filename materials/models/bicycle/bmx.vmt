@@ -1,6 +1,6 @@
 "VertexLitGeneric"
 {
-	"$basetexture" "models/bicycle/bicycle"
+	"$basetexture" "models/bicycle/bmx"
 	"$surfaceprop" "metal"
 
 	"$blendtintbybasealpha" 1
