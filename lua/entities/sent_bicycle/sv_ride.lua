@@ -50,6 +50,12 @@ local AIR_PITCH_RESPONSE = 6
 -- the other one down, which repeated hops would build into a flip.
 local LANDING_PITCH_DAMPING = 12
 
+-- In the air gravity won't let a bike stay slower than this (u/s) for long, so a ridden bike with no tyre down that
+-- does is lying on its frame, such as on its side after a bad landing. It's thrown off once that's lasted this many
+-- times as long as falling takes to pass through that speed.
+local RESTING_OFF_WHEELS_SPEED = 50
+local RESTING_OFF_WHEELS_FALL_TIMES = 3
+
 -- The cranks never visibly turn slower than this while pedalling, even when setting off.
 local MIN_PEDALLING_CADENCE = 40
 local CADENCE_CHANGE_RATE = 300
@@ -564,6 +570,21 @@ function ENT:PhysicsSimulate(physics, deltaTime)
       and (input.isBrakeHeld or self.isStoppieing)
 
   self:ApplyTyreSuspension(physics, ride, deltaTime)
+
+  -- Catches what the lean and pitch check above can't, such as a bike propped up by its handlebar just short of the
+  -- crash lean, or one that landed a flip on its side and so never touched down to judge it.
+  if (ride.isRidden and not ride.isCrashed and not self.isPhysgunHeld and ride.groundedCount == 0
+        and ride.velocity:Length() < RESTING_OFF_WHEELS_SPEED) then
+    self.restingOffWheelsTime = self.restingOffWheelsTime + deltaTime
+
+    local fallThroughTime = RESTING_OFF_WHEELS_SPEED * 2 / ride.gravity
+
+    if (self.restingOffWheelsTime > fallThroughTime * RESTING_OFF_WHEELS_FALL_TIMES) then
+      self.hasPendingCrash = true
+    end
+  else
+    self.restingOffWheelsTime = 0
+  end
 
   -- For the rider's pose.
   self.isWheelieing = ride.isWheelieing and ride.isRearGrounded

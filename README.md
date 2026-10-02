@@ -201,9 +201,9 @@ end)
 ```
 
 ### Crashing
-`BicycleShouldCrash` runs when a bike hits something hard enough, tips too far or rides into water that's too deep.
-Return `false` to keep the rider on the bike. While the bike stays tipped over or in deep water, this runs every tick,
-so keep it cheap:
+`BicycleShouldCrash` runs when a bike hits something hard enough, tips too far, ends up lying on its frame or rides
+into water that's too deep. Return `false` to keep the rider on the bike. While the bike stays tipped over, lying down
+or in deep water, this runs every tick, so keep it cheap:
 
 ```lua
 --- @param bike Entity The bike

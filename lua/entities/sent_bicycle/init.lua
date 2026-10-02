@@ -122,6 +122,7 @@ function ENT:Initialize()
   self.forwardLeanFraction = 0
   self.isWheelieing = false
   self.isStoppieing = false
+  self.restingOffWheelsTime = 0
   self.trickStates = {}
 
   self:StartMotionController()
