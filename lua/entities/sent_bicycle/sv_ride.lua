@@ -35,7 +35,7 @@ local PITCH_HOLD_MAX_SPEED = 90
 local PITCH_HOLD_RESPONSE = 10
 
 -- Keys whose double-taps tricks can read, and how quickly the second press must follow the first (s).
-local DOUBLE_TAP_KEYS = { IN_FORWARD, IN_BACK, IN_MOVELEFT, IN_MOVERIGHT }
+local DOUBLE_TAP_KEYS = { [IN_FORWARD] = true, [IN_BACK] = true, [IN_MOVELEFT] = true, [IN_MOVERIGHT] = true }
 local DOUBLE_TAP_WINDOW = 0.3
 
 -- In the air the nose eases along the bike's path, so it lands on its wheels instead of tumbling over: following this
@@ -96,31 +96,30 @@ function ENT:IsTooDeepToRide()
   return maxWaterLevel > 0 and self:WaterLevel() >= maxWaterLevel
 end
 
---- A triple tap counts once, as the second press is used up.
---- @param rider Player
---- @return table<number, boolean> # The DOUBLE_TAP_KEYS pressed a second time within DOUBLE_TAP_WINDOW
-function ENT:ReadDoubleTaps(rider)
-  local doubleTaps = {}
-  local now = CurTime()
-
-  self.tapKeys = self.tapKeys or {}
-
-  for _, key in ipairs(DOUBLE_TAP_KEYS) do
-    local tapKey = self.tapKeys[key] or {}
-    local isHeld = rider:KeyDown(key)
-
-    if (isHeld and not tapKey.isHeld) then
-      if (tapKey.pressedAt and now - tapKey.pressedAt <= DOUBLE_TAP_WINDOW) then
-        doubleTaps[key] = true
-        tapKey.pressedAt = nil
-      else
-        tapKey.pressedAt = now
-      end
-    end
-
-    tapKey.isHeld = isHeld
-    self.tapKeys[key] = tapKey
+--- Called for each key the rider presses, as their command is run. `CurTime` is then the rider's own time, so the
+--- double-tap window isn't stretched or squeezed by lag. A triple tap counts once, as the second press is used up.
+--- @param key number IN_ key
+function ENT:OnRiderKeyPress(key)
+  if (not DOUBLE_TAP_KEYS[key]) then
+    return
   end
+
+  local now = CurTime()
+  local pressedAt = self.tapPressedAt[key]
+
+  if (pressedAt and now - pressedAt <= DOUBLE_TAP_WINDOW) then
+    self.pendingDoubleTaps[key] = true
+    self.tapPressedAt[key] = nil
+  else
+    self.tapPressedAt[key] = now
+  end
+end
+
+--- @return table<number, boolean> # The DOUBLE_TAP_KEYS double-tapped since the last call
+function ENT:ReadDoubleTaps()
+  local doubleTaps = self.pendingDoubleTaps
+
+  self.pendingDoubleTaps = {}
 
   return doubleTaps
 end
@@ -132,7 +131,8 @@ function ENT:ReadRiderInput(rider)
   if (not IsValid(rider)) then
     self.wasJumpHeld = false
     self.wasBellHeld = false
-    self.tapKeys = nil
+    self.tapPressedAt = {}
+    self.pendingDoubleTaps = {}
 
     return {
       isPedalHeld = false,
@@ -167,7 +167,7 @@ function ENT:ReadRiderInput(rider)
     isTrickHeld = rider:KeyDown(IN_DUCK),
     isBellPressed = isBellPressed,
     -- IN_ keys double-tapped this tick.
-    doubleTaps = self:ReadDoubleTaps(rider),
+    doubleTaps = self:ReadDoubleTaps(),
   }
 
   hook.Run("BicycleReadInput", rider, self, input)

@@ -1,8 +1,12 @@
--- Held poses don't change, so they're resent this often (s) for players who come into view of the bike.
+-- Clients carry each trick on at its last sent speed, so it's only sent again once it's this far off that (deg).
+local TRICK_SEND_TOLERANCE = 1
+-- Tricks that clients already carry on right, such as held poses, are resent this often (s) for players who come into
+-- view of the bike.
 local TRICK_STATES_RESEND_INTERVAL = 0.25
 
 --- @param trick table
---- @return table # `{ angle, speed, direction, data, canSpin, isHeldSinceStart, sentAngle, sentSpeed }`
+--- @return table # `{ angle, speed, direction, data, canSpin, isHeldSinceStart, sent }`, `sent` is
+--- `{ angle, speed, tick }` as last sent, nil once sent straight
 function ENT:GetTrickState(trick)
   local state = self.trickStates[trick.id]
 
@@ -20,48 +24,74 @@ local function clearTrickMemory(state)
   state.data = {}
 end
 
+--- @param state table
+--- @return boolean # Whether the trick is spun away from straight or still moving
+local function isTrickActive(state)
+  return state.angle ~= 0 or state.speed ~= 0
+end
+
+--- @param sent table? `state.sent`
+--- @param tick number
+--- @return number # Where clients have carried the trick on to by `tick`
+local function getSentAngle(sent, tick)
+  if (not sent) then
+    return 0
+  end
+
+  return sent.angle + sent.speed * (tick - sent.tick) * engine.TickInterval()
+end
+
 --- Sends every trick that isn't straight, so each message replaces the last one whole and a lost one is made up for by
---- the next. While tricks are done they go unreliably to players who can see the bike, every tick they change and
---- every so often while held. Once all are straight again, that goes reliably to everyone, so nobody keeps an old pose.
+--- the next. Clients carry each trick on at its sent speed, so a message only goes once one drifts from that, or every
+--- so often while tricks are done. Those go unreliably to players who can see the bike, except when a trick stops, as
+--- clients would otherwise carry it on spinning. Once all are straight again, that goes reliably to everyone, so nobody
+--- keeps an old pose.
 function ENT:SendTrickStates()
-  local activeTricks = {}
-  local isChanged = false
+  local tick = engine.TickCount()
+  local activeCount = 0
+  local isDrifting = false
+  local isStopping = false
 
   for _, trick in ipairs(bicycle.trick.getAll()) do
     local state = self:GetTrickState(trick)
+    local sent = state.sent
 
-    if (state.angle ~= state.sentAngle or state.speed ~= state.sentSpeed) then
-      state.sentAngle, state.sentSpeed = state.angle, state.speed
-      isChanged = true
+    if (isTrickActive(state)) then
+      activeCount = activeCount + 1
     end
 
-    if (state.angle ~= 0 or state.speed ~= 0) then
-      activeTricks[#activeTricks + 1] = trick
-    end
+    isDrifting = isDrifting or math.abs(state.angle - getSentAngle(sent, tick)) > TRICK_SEND_TOLERANCE
+    isStopping = isStopping or (sent ~= nil and sent.speed ~= 0 and state.speed == 0)
   end
 
-  local isActive = #activeTricks > 0
+  local isActive = activeCount > 0
   local isEnding = not isActive and self.hasSentActiveTricks
   local isResendDue = CurTime() >= (self.nextTrickStatesSendAt or 0)
 
-  if (not isEnding and not (isActive and (isChanged or isResendDue))) then
+  if (not isEnding and not (isActive and (isDrifting or isStopping or isResendDue))) then
     return
   end
 
   self.hasSentActiveTricks = isActive
   self.nextTrickStatesSendAt = CurTime() + TRICK_STATES_RESEND_INTERVAL
 
-  net.Start("bicycle.TrickStates", isActive)
+  net.Start("bicycle.TrickStates", isActive and not isStopping)
   net.WriteEntity(self)
-  net.WriteUInt(engine.TickCount(), 32)
-  net.WriteUInt(#activeTricks, 8)
+  net.WriteUInt(tick, 32)
+  net.WriteUInt(activeCount, 8)
 
-  for _, trick in ipairs(activeTricks) do
+  for _, trick in ipairs(bicycle.trick.getAll()) do
     local state = self.trickStates[trick.id]
 
-    net.WriteString(trick.id)
-    net.WriteFloat(state.angle)
-    net.WriteFloat(state.speed)
+    if (isTrickActive(state)) then
+      bicycle.trick.write(trick)
+      net.WriteFloat(state.angle)
+      net.WriteFloat(state.speed)
+
+      state.sent = { angle = state.angle, speed = state.speed, tick = tick }
+    else
+      state.sent = nil
+    end
   end
 
   if (isActive) then

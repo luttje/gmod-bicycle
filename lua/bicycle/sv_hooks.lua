@@ -22,6 +22,16 @@ hook.Add("PlayerLeaveVehicle", "bicycle.riderLeave", function(player, vehicle)
   end
 end)
 
+-- Caught for each of the rider's commands as it's run, as checking keys once a tick misses presses when a lagging
+-- rider's commands arrive bunched up.
+hook.Add("KeyPress", "bicycle.riderKeyPress", function(player, key)
+  local bike = bicycle.getFromSeat(player:GetVehicle())
+
+  if (bike and bike:GetRider() == player) then
+    bike:OnRiderKeyPress(key)
+  end
+end)
+
 -- Only admins may pick up a bike someone is riding, anyone else could use it to fling the rider around.
 hook.Add("PhysgunPickup", "bicycle.physgunRidden", function(player, entity)
   if (entity.IsBicycle and IsValid(entity:GetRider())

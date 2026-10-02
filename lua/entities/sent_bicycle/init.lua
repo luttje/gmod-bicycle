@@ -112,6 +112,8 @@ function ENT:Initialize()
   self.steerFraction = 0
   self.wasJumpHeld = false
   self.wasBellHeld = false
+  self.tapPressedAt = {}
+  self.pendingDoubleTaps = {}
   self.nextHopAt = 0
   self.nextBellAt = 0
   self.nextImpactSoundAt = 0

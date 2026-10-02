@@ -71,11 +71,11 @@ local ANIMATED_BONES = {
   rightPedal = "pedal_R",
 }
 
--- Trick spins arrive at the tick rate, so they're drawn spinning on at the networked speed and pulled towards the
--- networked angle at this rate (1/s), settling once this close (deg).
-local TRICK_DISPLAY_RESPONSE = 20
-local TRICK_DISPLAY_EPSILON = 0.1
 local STEERING_AXIS_DEBUG_LENGTH = 30
+
+local cl_interp = GetConVar("cl_interp")
+local cl_interp_ratio = GetConVar("cl_interp_ratio")
+local cl_updaterate = GetConVar("cl_updaterate")
 
 -- Attachments shown by the debug overlay: the seat and the hand and foot targets.
 local DEBUG_ATTACHMENTS = { "seat", "grip_L", "grip_R", "pedal_L", "pedal_R" }
@@ -130,6 +130,7 @@ function ENT:Initialize()
   self.soundLoops = {}
   self.soundLoopVolumes = {}
   self.trickAngles = {}
+  self.trickSnapshots = {}
   self.restTargetPositions = {}
   self.trickPoseCallback = self:AddCallback("BuildBonePositions", function(entity)
     entity:PoseTricks()
@@ -630,36 +631,41 @@ function ENT:StopSoundLoops()
   end
 end
 
---- @return number # The drawn angle of a spin, signed and unwrapped like the networked one
-local function approachSpinDisplay(display, networkedAngle, networkedSpeed, deltaTime)
-  -- Landing takes the whole turns off a spin. They look the same, so the drawn angle drops them too instead of
-  -- spinning all the way back.
-  display = display + math.Round((networkedAngle - display) / 360) * 360
-  display = display + networkedSpeed * deltaTime
-  display = Lerp(1 - math.exp(-TRICK_DISPLAY_RESPONSE * deltaTime), display, networkedAngle)
-
-  -- Settled exactly, so a bike that isn't spinning skips the trick posing.
-  if (networkedSpeed == 0 and math.abs(networkedAngle - display) < TRICK_DISPLAY_EPSILON) then
-    return networkedAngle
-  end
-
-  return display
+--- @return number # How far behind the server entities are drawn (s), as the engine works it out
+local function getInterpolationDelay()
+  return math.max(cl_interp:GetFloat(), cl_interp_ratio:GetFloat() / math.max(cl_updaterate:GetFloat(), 1))
 end
 
---- Follows the spins the server sends
-function ENT:UpdateTrickAngles(deltaTime)
-  local networkedStates = self.networkedTrickStates or {}
+--- Keeps the trick states the server sent, until the bike is drawn as of when they were sent.
+--- @param time number Server time they were sent at
+--- @param states table<string, table> `{ angle, speed }` of every trick that isn't straight, by trick id
+function ENT:AddTrickSnapshot(time, states)
+  self.trickSnapshots[#self.trickSnapshots + 1] = { time = time, states = states }
+end
 
-  for _, trick in ipairs(bicycle.trick.getAll()) do
-    local networked = networkedStates[trick.id]
-    local angle = approachSpinDisplay(
-      self.trickAngles[trick.id] or 0,
-      networked and networked.angle or 0,
-      networked and networked.speed or 0,
-      deltaTime
-    )
+--- Draws tricks as of the moment the bike itself is drawn, so they're in step with its movement. The server sends
+--- a trick again once it drifts from its last sent speed, so carrying it on at that speed stays close.
+function ENT:UpdateTrickAngles()
+  local snapshots = self.trickSnapshots
+  local drawTime = CurTime() - getInterpolationDelay()
 
-    self.trickAngles[trick.id] = angle ~= 0 and angle or nil
+  -- Only the newest snapshot the bike is drawn past is needed.
+  while (snapshots[2] and snapshots[2].time <= drawTime) do
+    table.remove(snapshots, 1)
+  end
+
+  table.Empty(self.trickAngles)
+
+  local snapshot = snapshots[1]
+
+  if (not snapshot or snapshot.time > drawTime) then
+    return
+  end
+
+  for id, state in pairs(snapshot.states) do
+    local angle = state.angle + state.speed * (drawTime - snapshot.time)
+
+    self.trickAngles[id] = angle ~= 0 and angle or nil
   end
 end
 
@@ -668,7 +674,7 @@ function ENT:Think()
 
   self:SyncGeometry()
 
-  self:UpdateTrickAngles(deltaTime)
+  self:UpdateTrickAngles()
 
   self.wheelSpinAngle = (self.wheelSpinAngle + self:GetForwardSpeed() / self.WheelRadius * deltaTime) % FULL_TURN
   self.crankAngle = (self.crankAngle + self:GetCadence() / 60 * FULL_TURN * deltaTime) % FULL_TURN

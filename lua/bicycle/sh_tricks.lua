@@ -17,6 +17,11 @@ local SETTLE_BACK_ANGLE = 30
 local STRAIGHTEN_RATE = 15
 local STRAIGHT_EPSILON = 0.5
 
+-- Tricks are sent as the id of a network string named after them, which the server and clients agree on, instead of
+-- by their id.
+local NETWORK_NAME_PREFIX = "bicycle.trick."
+local NETWORK_ID_BITS = 12
+
 local TRICK_META = FindMetaTable("bicycle.trick")
 
 if (SERVER) then
@@ -50,7 +55,24 @@ function bicycle.trick.register(trick)
 
   tricksById[trick.id] = trick
 
+  if (SERVER) then
+    util.AddNetworkString(NETWORK_NAME_PREFIX .. trick.id)
+  end
+
   return trick
+end
+
+--- Writes `trick` to the net message being started.
+--- @param trick table
+function bicycle.trick.write(trick)
+  net.WriteUInt(util.NetworkStringToID(NETWORK_NAME_PREFIX .. trick.id), NETWORK_ID_BITS)
+end
+
+--- @return table? # The trick read from the net message, nil when this client doesn't have it
+function bicycle.trick.read()
+  local name = util.NetworkIDToString(net.ReadUInt(NETWORK_ID_BITS))
+
+  return name and bicycle.trick.get(name:sub(#NETWORK_NAME_PREFIX + 1))
 end
 
 --- @param id string
@@ -198,10 +220,13 @@ if (CLIENT) then
     local states = {}
 
     for _ = 1, net.ReadUInt(8) do
-      local id = net.ReadString()
+      local trick = bicycle.trick.read()
       local angle = net.ReadFloat()
+      local speed = net.ReadFloat()
 
-      states[id] = { angle = angle, speed = net.ReadFloat() }
+      if (trick) then
+        states[trick.id] = { angle = angle, speed = speed }
+      end
     end
 
     -- Each message holds every trick that isn't straight, so one arriving after a newer one is out of date as a whole.
@@ -210,7 +235,7 @@ if (CLIENT) then
     end
 
     bike.lastTrickStatesTick = tick
-    bike.networkedTrickStates = states
+    bike:AddTrickSnapshot(tick * engine.TickInterval(), states)
   end)
 end
 
