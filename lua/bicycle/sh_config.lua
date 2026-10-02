@@ -221,6 +221,14 @@ bicycle.tuningSections = {
         description = "Wheelie target angle (deg)",
       },
       {
+        name = "stoppie_angle",
+        label = "Stoppie angle",
+        default = 60,
+        min = 0,
+        max = 80,
+        description = "Stoppie target angle, nose down (deg)",
+      },
+      {
         name = "crash_speed",
         label = "Crash speed",
         default = 420,

@@ -27,6 +27,7 @@ local DEBUG_PANEL_BACKGROUND = Color(0, 0, 0, 170)
 local CONTROL_HINTS = {
   "W pedal   S brake/back   A/D steer",
   "SHIFT sprint   SPACE hop   MOUSE2 wheelie",
+  "MOUSE1 lean forward (brake to stoppie)",
   "CTRL camera   R bell   E get off",
 }
 

@@ -45,7 +45,8 @@ local FRONTAL_IMPACT_DOT = 0.6
 -- Any impact this many times bicycle_crash_speed throws the rider off, frontal or not.
 local ANY_IMPACT_CRASH_SCALE = 2
 
--- Sprint-pedalling tucks the rider forward and wheelieing leans them back, blending in and out at this rate.
+-- Sprint-pedalling and leaning forward tuck the rider forward and wheelieing leans them back, blending in and out at
+-- this rate.
 local SEAT_POSE_RESPONSE = 4
 local SPRINT_LEAN_MIN_SPEED = 40
 -- Below this change (fraction of the full pose) the seat isn't moved, so a settled pose doesn't network every tick.
@@ -57,6 +58,8 @@ local SEAT_POSE_KEYS = {
   sprintLeanPitch = true,
   wheelieLeanPitch = true,
   wheelieSeatShift = true,
+  leanForwardPitch = true,
+  leanForwardSeatShift = true,
 }
 
 function ENT:SpawnFunction(player, trace, className)
@@ -113,7 +116,9 @@ function ENT:Initialize()
   self.nextImpactSoundAt = 0
   self.sprintLeanFraction = 0
   self.wheelieLeanFraction = 0
+  self.forwardLeanFraction = 0
   self.isWheelieing = false
+  self.isStoppieing = false
 
   self:StartMotionController()
   self:CreateSeat()
@@ -696,26 +701,31 @@ local function approachPoseFraction(fraction, isActive)
   return fraction
 end
 
---- Eases the rider forward over the handlebar while they sprint-pedal, back and up while they wheelie, and upright
---- once they stop.
+--- Eases the rider forward over the handlebar while they sprint-pedal or lean forward, back and up while they wheelie,
+--- and upright once they stop.
 function ENT:UpdateSeatPose()
   local rider = self:GetRider()
   local isRiding = IsValid(rider) and not self:GetCrashed()
   local isWheelieing = isRiding and self.isWheelieing
+  local isLeaningForward = isRiding and not isWheelieing and rider:KeyDown(IN_ATTACK)
   local isSprinting = isRiding
       and not isWheelieing
+      and not isLeaningForward
       and rider:KeyDown(IN_SPEED)
       and rider:KeyDown(IN_FORWARD)
       and self:GetForwardSpeed() > SPRINT_LEAN_MIN_SPEED
   local sprintLeanFraction = approachPoseFraction(self.sprintLeanFraction, isSprinting)
   local wheelieLeanFraction = approachPoseFraction(self.wheelieLeanFraction, isWheelieing)
+  local forwardLeanFraction = approachPoseFraction(self.forwardLeanFraction, isLeaningForward)
 
-  if (sprintLeanFraction == self.sprintLeanFraction and wheelieLeanFraction == self.wheelieLeanFraction) then
+  if (sprintLeanFraction == self.sprintLeanFraction and wheelieLeanFraction == self.wheelieLeanFraction
+        and forwardLeanFraction == self.forwardLeanFraction) then
     return
   end
 
   self.sprintLeanFraction = sprintLeanFraction
   self.wheelieLeanFraction = wheelieLeanFraction
+  self.forwardLeanFraction = forwardLeanFraction
 
   local seat = self:GetSeat()
 

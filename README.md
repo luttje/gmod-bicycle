@@ -29,6 +29,7 @@ Knocked the bike over? Press **E** on it and it stands back up when you get on.
 | A / D | Steer Left/Right |
 | Shift | Sprint |
 | Space | Bunny hop |
+| Left mouse (hold) | Lean forward. Brake while leaning to pull a stoppie, then let go of the brake to keep rolling on the front wheel |
 | Right mouse (hold) | Wheelie |
 | R | Ring the bell |
 | Ctrl | Switch between first and third person |

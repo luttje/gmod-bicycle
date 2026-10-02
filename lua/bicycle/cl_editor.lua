@@ -27,6 +27,8 @@ local SNIPPET_KEY_ORDER = {
   "sprintLeanPitch",
   "wheelieLeanPitch",
   "wheelieSeatShift",
+  "leanForwardPitch",
+  "leanForwardSeatShift",
   "pedalCenterOffset",
   "footBallHeight",
   "gripOffset",

@@ -27,9 +27,12 @@ local LEAN_LIMITED_TURN_MIN_SPEED = 30
 local MAX_SUPPORTING_LEAN = 60
 
 local WHEELIE_MIN_SPEED = 40
-local WHEELIE_GAIN = 5
-local WHEELIE_MAX_PITCH_SPEED = 90
-local WHEELIE_RESPONSE = 10
+-- A stoppie needs this much forward speed, it drops back onto both wheels once slower.
+local STOPPIE_MIN_SPEED = 40
+-- How firmly a wheelie or stoppie holds its pitch.
+local PITCH_HOLD_GAIN = 5
+local PITCH_HOLD_MAX_SPEED = 90
+local PITCH_HOLD_RESPONSE = 10
 
 -- While a tyre is landing, pitch spin is damped (1/s), so one wheel landing hard doesn't kick that end up and slam
 -- the other one down, which repeated hops would build into a flip.
@@ -96,6 +99,7 @@ function ENT:ReadRiderInput(rider)
       isSprintHeld = false,
       isHopPressed = false,
       isWheelieHeld = false,
+      isLeanForwardHeld = false,
       isBellPressed = false,
     }
   end
@@ -115,6 +119,7 @@ function ENT:ReadRiderInput(rider)
     isSprintHeld = rider:KeyDown(IN_SPEED),
     isHopPressed = isHopPressed,
     isWheelieHeld = rider:KeyDown(IN_ATTACK2),
+    isLeanForwardHeld = rider:KeyDown(IN_ATTACK),
     isBellPressed = isBellPressed,
   }
 end
@@ -155,9 +160,9 @@ function ENT:MeasureRide(physics, rider)
 end
 
 --- While balanced, tyre support pushes on the line through the centre of mass (pitch only, no roll torque), so the
---- lean controller never fights gravity. During a wheelie it pushes through the centre of mass itself (no pitch torque
---- either), otherwise the rear tyre alone would carry the weight behind it and slam the nose down. Uncontrolled, it
---- pushes at the contact point and the bike falls naturally.
+--- lean controller never fights gravity. During a wheelie or stoppie it pushes through the centre of mass itself (no
+--- pitch torque either), otherwise the one tyre left down would carry the weight beyond it and slam the other end down.
+--- Uncontrolled, it pushes at the contact point and the bike falls naturally.
 function ENT:ApplyTyreSpring(physics, ride, wheel, contact, deltaTime)
   local normal = contact.normal
   local compression = math.min(contact.compression, self.WheelRadius * MAX_COMPRESSION_FRACTION)
@@ -173,7 +178,7 @@ function ENT:ApplyTyreSpring(physics, ride, wheel, contact, deltaTime)
 
   local forcePosition = contact.contactPosition
 
-  if (ride.isWheelieing) then
+  if (ride.isWheelieing or ride.isStoppieing) then
     forcePosition = physics:LocalToWorld(ride.massCenter)
   elseif (ride.isControlled) then
     forcePosition = physics:LocalToWorld(Vector(wheel.position.x, ride.massCenter.y, ride.massCenter.z))
@@ -377,18 +382,19 @@ function ENT:GetLeanCorrection(ride, targetLean, deltaTime)
   return ride.forward * ((wantedRollSpeed - currentRollSpeed) * blend * authority)
 end
 
---- Holds the nose at bicycle_wheelie_angle.
+--- Holds the nose at `targetPitch` for a wheelie or stoppie.
+--- @param targetPitch number Degrees, positive is nose up
 --- @return Vector # Angular velocity correction in world space, deg/s
-function ENT:GetWheelieCorrection(ride, deltaTime)
+function ENT:GetPitchHoldCorrection(ride, targetPitch, deltaTime)
   local wantedPitchSpeed = math.Clamp(
-    (bicycle.getTuning("wheelie_angle") - ride.pitch) * WHEELIE_GAIN,
-    -WHEELIE_MAX_PITCH_SPEED,
-    WHEELIE_MAX_PITCH_SPEED
+    (targetPitch - ride.pitch) * PITCH_HOLD_GAIN,
+    -PITCH_HOLD_MAX_SPEED,
+    PITCH_HOLD_MAX_SPEED
   )
   -- Positive pitches the nose up.
   local currentPitchSpeed = ride.angularVelocity:Dot(ride.right)
 
-  return ride.right * ((wantedPitchSpeed - currentPitchSpeed) * getBlendFraction(WHEELIE_RESPONSE, deltaTime))
+  return ride.right * ((wantedPitchSpeed - currentPitchSpeed) * getBlendFraction(PITCH_HOLD_RESPONSE, deltaTime))
 end
 
 --- Only while the bike moves into the ground, so the pitch a hop kicks in on take-off is left alone.
@@ -424,7 +430,9 @@ function ENT:ApplyBalance(physics, ride, input, steerAngle, deltaTime)
   correction:Add(self:GetLeanCorrection(ride, targetLean, deltaTime))
 
   if (ride.isWheelieing and ride.isRearGrounded) then
-    correction:Add(self:GetWheelieCorrection(ride, deltaTime))
+    correction:Add(self:GetPitchHoldCorrection(ride, bicycle.getTuning("wheelie_angle"), deltaTime))
+  elseif (ride.isStoppieing and ride.isFrontGrounded) then
+    correction:Add(self:GetPitchHoldCorrection(ride, -bicycle.getTuning("stoppie_angle"), deltaTime))
   else
     correction:Add(self:GetLandingPitchCorrection(ride, deltaTime))
   end
@@ -466,14 +474,22 @@ function ENT:PhysicsSimulate(physics, deltaTime)
     self.isCrashingIntoWater = true
   end
 
-  -- Decided before the tyres are sprung, since a wheelie changes where they push.
-  ride.isWheelieing = input.isWheelieHeld and ride.isControlled
-      and math.abs(ride.velocity:Dot(ride.forward)) > WHEELIE_MIN_SPEED
+  -- Decided before the tyres are sprung, since a wheelie or stoppie changes where they push.
+  local forwardSpeed = ride.velocity:Dot(ride.forward)
+
+  ride.isWheelieing = input.isWheelieHeld and ride.isControlled and math.abs(forwardSpeed) > WHEELIE_MIN_SPEED
+  -- Braking while leaning forward lifts the rear wheel. Once it's up, letting go of the brake keeps the bike rolling on
+  -- its front wheel for as long as the rider keeps leaning forward.
+  ride.isStoppieing = input.isLeanForwardHeld and not ride.isWheelieing and ride.isControlled
+      and forwardSpeed > STOPPIE_MIN_SPEED
+      and (input.isBrakeHeld or self.isStoppieing)
 
   self:ApplyTyreSuspension(physics, ride, deltaTime)
 
   -- For the rider's pose.
   self.isWheelieing = ride.isWheelieing and ride.isRearGrounded
+  -- Keeps the stoppie going next tick without the brake, until the front wheel leaves the ground.
+  self.isStoppieing = ride.isStoppieing and ride.isFrontGrounded
 
   local steerAngle = self:UpdateSteering(input.steerDirection, ride.absoluteSpeed, deltaTime)
   local isPedalling = input.isPedalHeld and ride.isRearGrounded

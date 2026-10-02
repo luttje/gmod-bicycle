@@ -28,6 +28,10 @@ ENT.SprintLeanPitch = 25
 -- How many degrees the rider leans back during a wheelie, and how far the seat moves with it (forward, left, up).
 ENT.WheelieLeanPitch = 1
 ENT.WheelieSeatShift = Vector(-1.93, 0, 1.58)
+-- How many degrees the rider leans forward while holding the forward lean (for stoppies), and how far the seat moves
+-- with it (forward, left, up).
+ENT.LeanForwardPitch = 15
+ENT.LeanForwardSeatShift = Vector(3, 0, 1)
 -- How far out from the pedal attachments the feet go, and how far above the pedal's axle the ball of the foot sits.
 ENT.PedalCenterOffset = 0
 ENT.FootBallHeight = 1
@@ -86,17 +90,21 @@ function ENT:GetAttachmentLocalPosition(attachmentName)
   return attachment and self:WorldToLocal(attachment.Pos)
 end
 
---- The saddle plus the model's seat offset. On the server this includes the shift back while wheelieing.
+--- The saddle plus the model's seat offset. On the server this includes the shift back while wheelieing and forward
+--- while leaning forward.
 function ENT:GetSeatOffset()
-  return self.SeatPosition + self.SeatOffset + self.WheelieSeatShift * (self.wheelieLeanFraction or 0)
+  return self.SeatPosition + self.SeatOffset
+      + self.WheelieSeatShift * (self.wheelieLeanFraction or 0)
+      + self.LeanForwardSeatShift * (self.forwardLeanFraction or 0)
 end
 
 --- Pitches the whole seat, and the rider with it, forward around the bike's sideways axis. On the server this includes
---- the extra tuck while sprinting and the lean back while wheelieing.
+--- the extra tuck while sprinting, the lean back while wheelieing and the lean forward while leaning forward.
 function ENT:GetSeatLocalAngles()
   local pitch = self.SeatPitch
       + self.SprintLeanPitch * (self.sprintLeanFraction or 0)
       - self.WheelieLeanPitch * (self.wheelieLeanFraction or 0)
+      + self.LeanForwardPitch * (self.forwardLeanFraction or 0)
   local angles = Angle(self.SeatAngles)
   angles:RotateAroundAxis(Vector(0, 1, 0), pitch)
 

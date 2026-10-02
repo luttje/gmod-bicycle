@@ -36,6 +36,10 @@ local DEFINITION_FIELDS = {
   wheelieLeanPitch = "WheelieLeanPitch",
   -- How far the seat moves while wheelieing: forward, left and up.
   wheelieSeatShift = "WheelieSeatShift",
+  -- Degrees the rider leans forward while holding the forward lean (for stoppies).
+  leanForwardPitch = "LeanForwardPitch",
+  -- How far the seat moves while leaning forward: forward, left and up.
+  leanForwardSeatShift = "LeanForwardSeatShift",
   -- How far out from the pedal attachments the feet are placed.
   pedalCenterOffset = "PedalCenterOffset",
   -- How far above the pedal's axle the ball of the foot sits.
@@ -181,6 +185,8 @@ hook.Add("BicycleRegisterModels", "bicycle.defaultModel", function()
     sprintLeanPitch = 25,
     wheelieLeanPitch = 0,
     wheelieSeatShift = Vector(-1.93, 0, 1.58),
+    leanForwardPitch = 15,
+    leanForwardSeatShift = Vector(3, 0, 1),
     pedalCenterOffset = 3.38,
     footBallHeight = 1,
     gripOffset = Vector(-0.12, -0.58, 1.17),
