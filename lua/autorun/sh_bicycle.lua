@@ -15,7 +15,10 @@ function bicycle.includePrefixed(fileName, directory)
   local prefix = fileName:sub(1, 3)
 
   directory = directory or ""
-  directory = directory:EndsWith("/") and directory or directory .. "/"
+
+  if (directory ~= "" and not directory:EndsWith("/")) then
+    directory = directory .. "/"
+  end
 
   local path = "bicycle/" .. directory .. fileName
 
