@@ -298,7 +298,7 @@ bicycle.tuningSections = {
         default = 70,
         min = 0,
         max = 90,
-        description = "Nose up or down angle that counts as a crash (deg)",
+        description = "Nose up or down angle against the ground that counts as a crash (deg)",
       },
     },
   },

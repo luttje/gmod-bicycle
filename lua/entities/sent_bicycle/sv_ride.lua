@@ -46,6 +46,13 @@ local AIR_PITCH_GAIN = 4
 local AIR_PITCH_MAX_SPEED = 120
 local AIR_PITCH_RESPONSE = 6
 
+-- The bike's path turns with the ground by at most this much per tick (deg), larger jumps aren't the same surface.
+local MAX_GROUND_FOLLOW_ANGLE = 45
+local MIN_GROUND_FOLLOW_COS = math.cos(math.rad(MAX_GROUND_FOLLOW_ANGLE))
+-- Tyres touching ground sloped this differently (deg) are on uneven ground, such as the foot of a ramp.
+local UNEVEN_GROUND_ANGLE = 5
+local UNEVEN_GROUND_COS = math.cos(math.rad(UNEVEN_GROUND_ANGLE))
+
 -- While a tyre is landing, pitch spin is damped (1/s), so one wheel landing hard doesn't kick that end up and slam
 -- the other one down, which repeated hops would build into a flip.
 local LANDING_PITCH_DAMPING = 12
@@ -217,7 +224,8 @@ end
 --- lean controller never fights gravity. During a wheelie or stoppie it pushes through the centre of mass itself (no
 --- pitch torque either), otherwise the one tyre left down would carry the weight beyond it and slam the other end down.
 --- Uncontrolled, it pushes at the contact point and the bike falls naturally.
-function ENT:ApplyTyreSpring(physics, ride, wheel, contact, deltaTime)
+--- @param isWall boolean Whether `contact` is a wall the tyre presses against, rather than ground
+function ENT:ApplyTyreSpring(physics, ride, wheel, contact, deltaTime, isWall)
   local normal = contact.normal
   local compression = math.min(contact.compression, self.WheelRadius * MAX_COMPRESSION_FRACTION)
   local compressionSpeed = -physics:GetVelocityAtPoint(contact.hubPosition):Dot(normal)
@@ -232,6 +240,11 @@ function ENT:ApplyTyreSpring(physics, ride, wheel, contact, deltaTime)
 
   local forcePosition = contact.contactPosition
   local force = normal * (acceleration * ride.mass * deltaTime)
+
+  -- Arcade-feel: ground never holds the bike back along its heading, such as at the foot of a ramp.
+  if (ride.isControlled and not isWall) then
+    force:Sub(ride.forwardAlongGround * force:Dot(ride.forwardAlongGround))
+  end
 
   if (ride.isWheelieing or ride.isStoppieing) then
     forcePosition = physics:LocalToWorld(ride.massCenter)
@@ -256,6 +269,7 @@ end
 function ENT:ApplyTyreSuspension(physics, ride, deltaTime)
   local groundNormalSum = Vector(0, 0, 0)
   local groundedContacts = {}
+  local wallContacts = {}
 
   ride.groundedCount = 0
   ride.isFrontGrounded = false
@@ -279,20 +293,65 @@ function ENT:ApplyTyreSuspension(physics, ride, deltaTime)
         groundNormalSum:Add(contact.normal)
         groundedContacts[index] = contact
       end
+
+      wallContacts[index] = contact.wall
     end
   end
 
   ride.groundNormal = ride.groundedCount > 0 and groundNormalSum:GetNormalized() or vector_up
+  ride.forwardAlongGround = projectOntoPlane(ride.forward, ride.groundNormal)
+  ride.sideAlongGround = projectOntoPlane(ride.right, ride.groundNormal)
+  ride.isGroundUneven = false
+
+  for _, contact in pairs(groundedContacts) do
+    if (contact.normal:Dot(ride.groundNormal) < UNEVEN_GROUND_COS) then
+      ride.isGroundUneven = true
+    end
+  end
+
+  self:FollowGround(physics, ride)
 
   for index, contact in pairs(groundedContacts) do
-    self:ApplyTyreSpring(physics, ride, self.Wheels[index], contact, deltaTime)
+    self:ApplyTyreSpring(physics, ride, self.Wheels[index], contact, deltaTime, false)
+  end
+
+  for index, contact in pairs(wallContacts) do
+    self:ApplyTyreSpring(physics, ride, self.Wheels[index], contact, deltaTime, true)
   end
 
   ride.groundedFraction = ride.groundedCount / #self.Wheels
-  ride.forwardAlongGround = projectOntoPlane(ride.forward, ride.groundNormal)
-  ride.sideAlongGround = projectOntoPlane(ride.right, ride.groundNormal)
   ride.speed = ride.velocity:Dot(ride.forwardAlongGround)
   ride.absoluteSpeed = math.abs(ride.speed)
+end
+
+--- Arcade-feel: while grounded, the bike's path turns as the ground does, so it rolls into a ramp or quarter pipe instead
+--- of losing its speed against it. Only into the ground, so the bike can still fly off a crest.
+function ENT:FollowGround(physics, ride)
+  local previousNormal = self.lastGroundNormal
+  local normal = ride.groundNormal
+
+  self.lastGroundNormal = (ride.isControlled and ride.groundedCount > 0) and normal or nil
+
+  if (not previousNormal or not self.lastGroundNormal or ride.velocity:Dot(normal) >= 0) then
+    return
+  end
+
+  local axis = previousNormal:Cross(normal)
+  local sine = axis:Length()
+  local cosine = previousNormal:Dot(normal)
+
+  if (sine < 1e-4 or cosine < MIN_GROUND_FOLLOW_COS) then
+    return
+  end
+
+  axis:Div(sine)
+
+  -- Rodrigues' rotation by the same turn as the ground's.
+  local velocity = ride.velocity
+  local turned = velocity * cosine + axis:Cross(velocity) * sine + axis * (axis:Dot(velocity) * (1 - cosine))
+
+  physics:AddVelocity(turned - velocity)
+  ride.velocity = turned
 end
 
 --- The faster the bike goes, the fewer degrees of handlebar a full steer gives: it narrows from bicycle_steer_max to
@@ -480,10 +539,11 @@ function ENT:GetPitchHoldCorrection(ride, targetPitch, deltaTime)
   return ride.right * ((wantedPitchSpeed - currentPitchSpeed) * getBlendFraction(PITCH_HOLD_RESPONSE, deltaTime))
 end
 
---- Only while the bike moves into the ground, so the pitch a hop kicks in on take-off is left alone.
+--- Only while the bike moves into the ground, so the pitch a hop kicks in on take-off is left alone. Not on uneven
+--- ground either, where the bike must pitch to follow it.
 --- @return Vector # Angular velocity correction in world space, deg/s
 function ENT:GetLandingPitchCorrection(ride, deltaTime)
-  if (ride.groundedCount == 0 or ride.velocity:Dot(ride.groundNormal) >= 0) then
+  if (ride.groundedCount == 0 or ride.isGroundUneven or ride.velocity:Dot(ride.groundNormal) >= 0) then
     return Vector(0, 0, 0)
   end
 
@@ -573,13 +633,6 @@ function ENT:PhysicsSimulate(physics, deltaTime)
   local input = self:ReadRiderInput(rider)
   local ride = self:MeasureRide(physics, rider)
 
-  -- Crashing ejects the rider, which can't happen inside the physics step.
-  -- A trick turning the bike over, such as a flip, judges its own landing instead.
-  if (ride.isRidden and not ride.isCrashed and not self.isPhysgunHeld and not self.isRotatingBike
-        and (math.abs(ride.lean) > bicycle.getTuning("crash_lean") or math.abs(ride.pitch) > bicycle.getTuning("crash_pitch"))) then
-    self.hasPendingCrash = true
-  end
-
   if (ride.isRidden and not ride.isCrashed and self:IsTooDeepToRide()) then
     self.hasPendingCrash = true
     self.isCrashingIntoWater = true
@@ -596,6 +649,16 @@ function ENT:PhysicsSimulate(physics, deltaTime)
       and (input.isBrakeHeld or self.isStoppieing)
 
   self:ApplyTyreSuspension(physics, ride, deltaTime)
+
+  -- Crashing ejects the rider, which can't happen inside the physics step. Only on the ground, never in the air, and
+  -- pitch is against the ground so steep ramps aren't crashes. A trick turning the bike over judges its own landing.
+  local groundPitch = math.deg(math.asin(math.Clamp(ride.forward:Dot(ride.groundNormal), -1, 1)))
+
+  if (ride.isRidden and not ride.isCrashed and not self.isPhysgunHeld and not self.isRotatingBike
+        and ride.groundedCount > 0
+        and (math.abs(ride.lean) > bicycle.getTuning("crash_lean") or math.abs(groundPitch) > bicycle.getTuning("crash_pitch"))) then
+    self.hasPendingCrash = true
+  end
 
   -- Catches what the lean and pitch check above can't, such as a bike propped up by its handlebar just short of the
   -- crash lean, or one that landed a flip on its side and so never touched down to judge it.

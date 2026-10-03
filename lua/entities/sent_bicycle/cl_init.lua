@@ -734,6 +734,11 @@ function ENT:DrawDebugWheel(index, wheel)
     render.DrawLine(hubPosition, contact.contactPosition, colors.wheelTrace, false)
     render.DrawWireframeSphere(contact.contactPosition, 1.2, 6, 6, color, false)
   end
+
+  if (contact and contact.wall) then
+    render.DrawLine(hubPosition, contact.wall.contactPosition, colors.wheelTrace, false)
+    render.DrawWireframeSphere(contact.wall.contactPosition, 1.2, 6, 6, color, false)
+  end
 end
 
 function ENT:DrawDebug()

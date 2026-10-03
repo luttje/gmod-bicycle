@@ -51,6 +51,13 @@ local MIN_WHEEL_DOWN_LENGTH = 0.35
 -- Wheel traces start this far behind the hub, so a hub resting on the ground still finds it.
 local WHEEL_TRACE_BACKOFF = 6
 local WHEEL_TRACE_REACH_PAST_RIM = 8
+-- The wheel traces fan across the lower half of the wheel (deg either side of the bike's down), so steep slopes and
+-- ramps ahead are found too.
+local WHEEL_TRACE_FAN_ANGLE = 90
+local WHEEL_TRACE_FAN_COUNT = 9
+-- Steeper surfaces (deg from the bike's up) are walls: they push the wheel back but aren't ridden on.
+local MAX_GROUND_ANGLE = 60
+local MIN_GROUND_NORMAL_UP = math.cos(math.rad(MAX_GROUND_ANGLE))
 
 function ENT:SetupDataTables()
   self:NetworkVar("Entity", "Seat")
@@ -137,58 +144,116 @@ function ENT:GetWheelTraceFilter()
   return filter
 end
 
---- Traces from the hub to the lowest point of the wheel disc (world down projected into the wheel plane), so the
---- contact stays correct while the bike leans.
+--- @return table? # { distance, contactPosition, normal }, nil when the trace reaches nothing
+local function traceWheelRay(hubPosition, direction, radius, filter)
+  local reach = radius + WHEEL_TRACE_REACH_PAST_RIM
+  local trace = util.TraceLine({
+    start = hubPosition - direction * WHEEL_TRACE_BACKOFF,
+    endpos = hubPosition + direction * reach,
+    filter = filter,
+    mask = MASK_SOLID,
+  })
+
+  if (not trace.Hit) then
+    return nil
+  end
+
+  if (trace.StartSolid) then
+    -- A trace starting inside the ground has no usable fraction or normal, so push straight back along it instead.
+    return { distance = radius * 0.5, contactPosition = trace.HitPos, normal = -direction }
+  end
+
+  return {
+    distance = trace.Fraction * (WHEEL_TRACE_BACKOFF + reach) - WHEEL_TRACE_BACKOFF,
+    contactPosition = trace.HitPos,
+    normal = trace.HitNormal,
+  }
+end
+
+--- Retraces along the hit surface's normal within the wheel plane, which is exact on flat surfaces.
+--- @return table # The closer of `hit` and the retrace
+local function refineWheelHit(hit, hubPosition, right, up, radius, filter)
+  local direction = right * hit.normal:Dot(right) - hit.normal
+  local directionLength = direction:Length()
+
+  if (directionLength < MIN_WHEEL_DOWN_LENGTH) then
+    return hit
+  end
+
+  direction:Div(directionLength)
+
+  local refined = traceWheelRay(hubPosition, direction, radius, filter)
+  local isGround = hit.normal:Dot(up) >= MIN_GROUND_NORMAL_UP
+
+  if (refined and refined.distance < hit.distance and (refined.normal:Dot(up) >= MIN_GROUND_NORMAL_UP) == isGround) then
+    return refined
+  end
+
+  return hit
+end
+
+--- Finds the nearest ground and wall within the wheel disc, so the contact stays correct while leaning or on slopes.
 --- @param wheelIndex number
 --- @param filter? table Defaults to `ENT:GetWheelTraceFilter()`
 --- @param position? Vector Defaults to the bike's position
 --- @param angles? Angle Defaults to the bike's angles
---- @return table # { hubPosition, isHit, isGrounded, compression, contactPosition?, normal? }
+--- @return table # { hubPosition, isHit, isGrounded, compression, contactPosition?, normal?, wall? }, where `wall` is
+--- { hubPosition, compression, contactPosition, normal } while the wheel presses against one
 function ENT:TraceWheel(wheelIndex, filter, position, angles)
   position = position or self:GetPos()
   angles = angles or self:GetAngles()
+  filter = filter or self:GetWheelTraceFilter()
 
   local radius = self.WheelRadius
   local hubPosition = LocalToWorld(self.Wheels[wheelIndex].position, angle_zero, position, angles)
   local contact = { hubPosition = hubPosition, isHit = false, isGrounded = false, compression = 0 }
 
-  local right = angles:Right()
-  local wheelDown = right * right.z - vector_up
-  local wheelDownLength = wheelDown:Length()
+  local forward, right, up = angles:Forward(), angles:Right(), angles:Up()
 
-  if (wheelDownLength < MIN_WHEEL_DOWN_LENGTH) then
+  -- How much of world down lies within the wheel plane.
+  if (math.sqrt(1 - right.z * right.z) < MIN_WHEEL_DOWN_LENGTH) then
     return contact
   end
 
-  wheelDown:Div(wheelDownLength)
+  local nearestGround, nearestWall
 
-  local reach = radius + WHEEL_TRACE_REACH_PAST_RIM
-  local trace = util.TraceLine({
-    start = hubPosition - wheelDown * WHEEL_TRACE_BACKOFF,
-    endpos = hubPosition + wheelDown * reach,
-    filter = filter or self:GetWheelTraceFilter(),
-    mask = MASK_SOLID,
-  })
+  for ray = 0, WHEEL_TRACE_FAN_COUNT - 1 do
+    local fanAngle = math.rad(WHEEL_TRACE_FAN_ANGLE * (ray * 2 / (WHEEL_TRACE_FAN_COUNT - 1) - 1))
+    local hit = traceWheelRay(hubPosition, forward * math.sin(fanAngle) - up * math.cos(fanAngle), radius, filter)
 
-  if (not trace.Hit) then
-    return contact
+    if (hit) then
+      if (hit.normal:Dot(up) >= MIN_GROUND_NORMAL_UP) then
+        if (not nearestGround or hit.distance < nearestGround.distance) then
+          nearestGround = hit
+        end
+      elseif (not nearestWall or hit.distance < nearestWall.distance) then
+        nearestWall = hit
+      end
+    end
   end
 
-  contact.isHit = true
-  contact.contactPosition = trace.HitPos
-  contact.normal = trace.HitNormal
+  if (nearestGround) then
+    nearestGround = refineWheelHit(nearestGround, hubPosition, right, up, radius, filter)
 
-  if (trace.StartSolid) then
-    -- A trace starting inside the ground has no usable fraction or normal, so push straight up instead.
-    contact.compression = radius * 0.5
-    contact.normal = vector_up
-  else
-    local hitDistance = trace.Fraction * (WHEEL_TRACE_BACKOFF + reach) - WHEEL_TRACE_BACKOFF
-
-    contact.compression = radius - hitDistance
+    contact.isHit = true
+    contact.contactPosition = nearestGround.contactPosition
+    contact.normal = nearestGround.normal
+    contact.compression = radius - nearestGround.distance
+    contact.isGrounded = contact.compression > 0
   end
 
-  contact.isGrounded = contact.compression > 0
+  if (nearestWall) then
+    nearestWall = refineWheelHit(nearestWall, hubPosition, right, up, radius, filter)
+
+    if (nearestWall.distance < radius) then
+      contact.wall = {
+        hubPosition = hubPosition,
+        compression = radius - nearestWall.distance,
+        contactPosition = nearestWall.contactPosition,
+        normal = nearestWall.normal,
+      }
+    end
+  end
 
   return contact
 end
