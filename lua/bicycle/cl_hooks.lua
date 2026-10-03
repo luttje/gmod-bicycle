@@ -55,8 +55,12 @@ function bicycle.findLocalBicycle()
   return (IsValid(bike) and bike.IsBicycle) and bike or nil
 end
 
---- @return boolean # Whether `player` is the local player, riding in first person with bicycle_cam_body on
-function bicycle.isShowingFirstPersonBody(player)
+-- The last frame the bicycle's camera made the view. Another addon's CalcView or CalcVehicleView hook can take over
+-- the view before ours runs, and the rider would then be seen without a head.
+local cameraFrame = -1
+
+--- @return boolean # Whether `player` is the local player, riding with the settings for first person with their body
+local function wantsFirstPersonBody(player)
   if (player ~= LocalPlayer() or GetViewEntity() ~= player or not bicycle.getClientSettingBool("cam_body")) then
     return false
   end
@@ -64,6 +68,12 @@ function bicycle.isShowingFirstPersonBody(player)
   local vehicle = player:GetVehicle()
 
   return bicycle.getFromSeat(vehicle) ~= nil and not bicycle.getClientSettingBool("cam_third_person")
+end
+
+--- @return boolean # Whether `player` is the local player, riding in first person with bicycle_cam_body on, seen
+--- through the bicycle's own camera
+function bicycle.isShowingFirstPersonBody(player)
+  return wantsFirstPersonBody(player) and cameraFrame >= FrameNumber() - 1
 end
 
 --- Where the rider's playermodel has its eyes this frame. The seat's own eye position doesn't follow the rider leaning
@@ -320,7 +330,7 @@ local function getSmoothedViewAngles(bike, vehicle, viewAngles)
   end
 
   -- The input is already limited, this only covers the view being calculated before it.
-  if (bicycle.isShowingFirstPersonBody(LocalPlayer())) then
+  if (wantsFirstPersonBody(LocalPlayer())) then
     look = clampBodyLook(look)
   end
 
@@ -345,7 +355,7 @@ hook.Add("CalcVehicleView", "bicycle.camera", function(vehicle, player, view)
     origin = view.origin,
     angles = angles,
     fov = view.fov + fovBoostFraction * bicycle.getClientSetting("cam_fov_boost"),
-    drawviewer = bicycle.isShowingFirstPersonBody(player),
+    drawviewer = wantsFirstPersonBody(player),
   }
 
   -- Not the vehicle's own third person mode, which GMod toggles with Ctrl: that's the trick button here.
@@ -368,6 +378,7 @@ hook.Add("CalcVehicleView", "bicycle.camera", function(vehicle, player, view)
   end
 
   blendFromFootView(vehicle, cameraView)
+  cameraFrame = FrameNumber()
 
   return cameraView
 end)
