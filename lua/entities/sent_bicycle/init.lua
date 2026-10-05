@@ -483,7 +483,8 @@ function ENT:CanRiderLeave(player)
   local position = self:FindDismountPosition(player, DISMOUNT_OFFSETS)
 
   if (not position) then
-    return false
+    -- Not being able to exit the bicycle was confusing to players, so the fallback is used instead of keeping them on.
+    position = self:FindFallbackDismountPosition(player)
   end
 
   self.plannedDismount = { position = position, at = CurTime() }
