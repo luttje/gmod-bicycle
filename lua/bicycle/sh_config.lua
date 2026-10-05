@@ -379,6 +379,14 @@ bicycle.tuningSections = {
         description = "Riderless bikes leaning further than this fall over anyway (deg)",
       },
       {
+        name = "dismount_anywhere",
+        label = "Always let riders get off",
+        type = "bool",
+        default = 0,
+        description = "Riders with no room to stand beside the bike get off above it instead of staying on, "
+          .. "which could put them past a player clip the bike rode through",
+      },
+      {
         name = "rider_seq",
         label = "Rider sequence",
         type = "string",

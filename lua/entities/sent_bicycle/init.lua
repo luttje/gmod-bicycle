@@ -475,15 +475,19 @@ function ENT:FindFallbackDismountPosition(player)
   return IsValid(seat) and seat:GetPos() or origin
 end
 
---- Called when the rider asks to get off. They stay on when there is nowhere to stand, as the fallback position could
---- be past a player clip the bike rode through.
+--- Called when the rider asks to get off. With dismount_anywhere off they stay on when there is nowhere to stand, as
+--- the fallback position could be past a player clip the bike rode through.
 --- @param player Player
 --- @return boolean
 function ENT:CanRiderLeave(player)
   local position = self:FindDismountPosition(player, DISMOUNT_OFFSETS)
 
   if (not position) then
-    -- Not being able to exit the bicycle was confusing to players, so the fallback is used instead of keeping them on.
+    -- Not being able to exit the bicycle can confuse players, so servers can opt into the fallback instead.
+    if (not bicycle.getTuningBool("dismount_anywhere")) then
+      return false
+    end
+
     position = self:FindFallbackDismountPosition(player)
   end
 
