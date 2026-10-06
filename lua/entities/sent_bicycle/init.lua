@@ -643,6 +643,16 @@ function ENT:EmitBicycleSound(...)
   end
 end
 
+--- @param impactSpeed number Speed into what was hit (u/s)
+--- @param hitNormal Vector
+--- @return boolean # Whether hitting something this hard throws the rider off
+function ENT:IsCrashImpact(impactSpeed, hitNormal)
+  local crashSpeed = bicycle.getTuning("crash_speed")
+  local isFrontal = math.abs(hitNormal:Dot(self:GetForward())) > FRONTAL_IMPACT_DOT
+
+  return (isFrontal and impactSpeed > crashSpeed) or impactSpeed > crashSpeed * ANY_IMPACT_CRASH_SCALE
+end
+
 -- Changing entity state inside a physics callback is unsafe, so impacts are only recorded here and handled in Think.
 function ENT:PhysicsCollide(collision)
   local impactSpeed = math.abs(collision.OurOldVelocity:Dot(collision.HitNormal))
@@ -659,10 +669,7 @@ function ENT:PhysicsCollide(collision)
     return
   end
 
-  local crashSpeed = bicycle.getTuning("crash_speed")
-  local isFrontal = math.abs(collision.HitNormal:Dot(self:GetForward())) > FRONTAL_IMPACT_DOT
-
-  if ((isFrontal and impactSpeed > crashSpeed) or impactSpeed > crashSpeed * ANY_IMPACT_CRASH_SCALE) then
+  if (self:IsCrashImpact(impactSpeed, collision.HitNormal)) then
     self.hasPendingCrash = true
   end
 end

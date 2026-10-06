@@ -67,6 +67,13 @@ local MIN_GROUND_FOLLOW_COS = math.cos(math.rad(MAX_GROUND_FOLLOW_ANGLE))
 local UNEVEN_GROUND_ANGLE = 5
 local UNEVEN_GROUND_COS = math.cos(math.rad(UNEVEN_GROUND_ANGLE))
 
+-- Touchdowns are looked for along the bike's path, for ground it falls into at least this steeply (cosine of the angle
+-- from its normal). Shallower, the bike hardly moves into the ground.
+local MIN_TOUCHDOWN_APPROACH_COS = 0.3
+-- Steeper surfaces (deg from the bike's up) are walls, which the tyres don't land on.
+local MAX_TOUCHDOWN_GROUND_ANGLE = 60
+local MIN_TOUCHDOWN_GROUND_UP = math.cos(math.rad(MAX_TOUCHDOWN_GROUND_ANGLE))
+
 -- While a tyre is landing, pitch spin is damped (1/s), so one wheel landing hard doesn't kick that end up and slam
 -- the other one down, which repeated hops would build into a flip.
 local LANDING_PITCH_DAMPING = 12
@@ -341,6 +348,7 @@ function ENT:ApplyTyreSuspension(physics, ride, deltaTime)
   end
 
   self:FollowGround(physics, ride)
+  self:CushionTouchdown(physics, ride, deltaTime)
 
   for index, contact in pairs(groundedContacts) do
     self:ApplyTyreSpring(physics, ride, self.Wheels[index], contact, deltaTime, false)
@@ -383,6 +391,61 @@ function ENT:FollowGround(physics, ride)
 
   physics:AddVelocity(turned - velocity)
   ride.velocity = turned
+end
+
+--- @return Vector?, number? # The normal of the ground `wheel` lands on along `direction`, and how far its tyre is from
+--- touching it. Nil when there is no ground within `reach`.
+function ENT:TraceTouchdown(ride, wheel, filter, direction, reach)
+  local hubPosition = LocalToWorld(wheel.position, angle_zero, ride.position, ride.angles)
+  local trace = util.TraceLine({
+    start = hubPosition,
+    endpos = hubPosition + direction * reach,
+    filter = filter,
+    mask = MASK_SOLID,
+  })
+
+  if (not trace.Hit or trace.StartSolid or trace.HitNormal:Dot(ride.angles:Up()) < MIN_TOUCHDOWN_GROUND_UP) then
+    return nil
+  end
+
+  return trace.HitNormal, (hubPosition - trace.HitPos):Dot(trace.HitNormal) - self.WheelRadius
+end
+
+function ENT:CushionTouchdown(physics, ride, deltaTime)
+  local speed = ride.velocity:Length()
+
+  if (ride.groundedCount > 0 or not ride.isRidden or not ride.isControlled or speed < 1) then
+    return
+  end
+
+  local direction = ride.velocity / speed
+  local reach = (self.WheelRadius + speed * deltaTime) / MIN_TOUCHDOWN_APPROACH_COS
+  local filter = self:GetWheelTraceFilter()
+  -- Damping alone stops a tyre within speed / damping, so this is the fastest it stops within its travel.
+  local maxTouchdownSpeed = bicycle.getTuning("damper") * self.WheelRadius * (1 - self.WheelHullScale)
+  local cushionNormal, cushionSpeed = nil, 0
+
+  for _, wheel in ipairs(self.Wheels) do
+    local normal, gap = self:TraceTouchdown(ride, wheel, filter, direction, reach)
+
+    if (normal) then
+      local approachSpeed = -ride.velocity:Dot(normal)
+      -- Only slowed once it would otherwise reach the ground this tick, so it doesn't stop short in mid-air: first to
+      -- end the tick just short of it, then to touch down next tick.
+      local wantedSpeed = math.max(maxTouchdownSpeed, (gap - maxTouchdownSpeed * deltaTime) / deltaTime)
+
+      if (approachSpeed - wantedSpeed > cushionSpeed and not self:IsCrashImpact(approachSpeed, normal)) then
+        cushionNormal, cushionSpeed = normal, approachSpeed - wantedSpeed
+      end
+    end
+  end
+
+  if (cushionNormal) then
+    local speedChange = cushionNormal * cushionSpeed
+
+    physics:AddVelocity(speedChange)
+    ride.velocity = ride.velocity + speedChange
+  end
 end
 
 --- The faster the bike goes, the fewer degrees of handlebar a full steer gives: it narrows from bicycle_steer_max to
