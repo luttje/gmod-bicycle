@@ -40,6 +40,19 @@ function TRICK:Simulate(bike, physics, ride, state, deltaTime)
 
   local pitchSpeed = ride.angularVelocity:Dot(ride.right)
 
+  -- With advanced air control, a finished flip hands the bike back to the rider's air controls instead of holding it
+  -- where it ended, which may be tilted by the first tap of the double-tap. Its last spin is stopped so the bike
+  -- doesn't carry on turning over.
+  if (state.speed == 0 and bicycle.getTuningBool("advanced_air_control")) then
+    if (not data.isReleased) then
+      data.isReleased = true
+      physics:AddAngleVelocity(physics:WorldToLocalVector(ride.right * -pitchSpeed))
+    end
+
+    return
+  end
+
+  data.isReleased = false
   data.rotated = (data.rotated or 0) + pitchSpeed * deltaTime
 
   local wantedPitchSpeed = state.speed + (state.angle - data.rotated) * FLIP_ANGLE_GAIN

@@ -841,8 +841,15 @@ function ENT:GetAirControlCorrection(ride, deltaTime)
     correction:Add(up * ((wantedSpinSpeed - ride.angularVelocity:Dot(up)) * blend))
   end
 
-  -- A flip turns the bike over itself.
-  if (self.isRotatingBike) then
+  -- A flip turns the bike over itself. With advanced air control it hands the bike back once it stops turning, so the
+  -- rider can still straighten it before landing.
+  local isFlipInControl = self.isRotatingBike
+
+  if (bicycle.getTuningBool("advanced_air_control")) then
+    isFlipInControl = self.isSpinningBike
+  end
+
+  if (isFlipInControl) then
     return correction
   end
 

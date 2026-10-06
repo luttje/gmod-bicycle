@@ -110,6 +110,7 @@ function ENT:ResetTricks()
   end
 
   self.isRotatingBike = false
+  self.isSpinningBike = false
   self:SendTrickStates()
 end
 
@@ -129,6 +130,7 @@ function ENT:UpdateTricks(physics, ride, input, rider, deltaTime)
   local contact = bicycle.trick.getContact(ride.isFrontGrounded, ride.isRearGrounded)
   local isSteeringTrick = false
   local isRotatingBike = false
+  local isSpinningBike = false
   local landedTricks = {}
   local isBailing = false
 
@@ -173,10 +175,13 @@ function ENT:UpdateTricks(physics, ride, input, rider, deltaTime)
 
     state.canSpin = canSpin
     isRotatingBike = isRotatingBike or (trick.rotatesBike and (state.angle ~= 0 or state.speed ~= 0))
+    isSpinningBike = isSpinningBike or (trick.rotatesBike and state.speed ~= 0)
   end
 
   -- Read by the crash check next tick, which runs before the tricks.
   self.isRotatingBike = isRotatingBike
+  -- Unlike `isRotatingBike`, ends once the bike stops turning over rather than on landing.
+  self.isSpinningBike = isSpinningBike
   self:SendTrickStates()
 
   if (isBailing) then
