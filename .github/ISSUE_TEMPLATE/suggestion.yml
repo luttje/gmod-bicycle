@@ -44,8 +44,7 @@ body:
     options:
     - Built-in default bike
     - Custom bike model
-  validations:
-    required: true
+    - All bikes
 
 - type: checkboxes
   id: checks
