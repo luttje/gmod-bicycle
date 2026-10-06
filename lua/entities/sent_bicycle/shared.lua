@@ -58,6 +58,12 @@ local WHEEL_TRACE_FAN_COUNT = 9
 -- Steeper surfaces (deg from the bike's up) are walls: they push the wheel back but aren't ridden on.
 local MAX_GROUND_ANGLE = 60
 local MIN_GROUND_NORMAL_UP = math.cos(math.rad(MAX_GROUND_ANGLE))
+-- A wall whose top is below the hub is a step, such as a curb. The wheel rolls over its edge as long as the edge pushes
+-- it at most this steeply (deg from the bike's up), which allows steps up to about three quarters of the wheel radius.
+local MAX_STEP_EDGE_ANGLE = 75
+local MIN_STEP_EDGE_NORMAL_UP = math.cos(math.rad(MAX_STEP_EDGE_ANGLE))
+-- How far past a wall's face the step's top is looked for.
+local STEP_PROBE_DEPTH = 2
 
 function ENT:SetupDataTables()
   self:NetworkVar("Entity", "Seat")
@@ -192,13 +198,52 @@ local function refineWheelHit(hit, hubPosition, right, up, radius, filter)
   return hit
 end
 
+--- Looks for the top of the step a wall hit belongs to. The fan only finds the step's flat top and face, never the edge
+--- between them, so a wheel against a curb would be held up by the top and pushed back by the face, and never climb.
+--- @return table? # { distance, contactPosition, normal, groundNormal } for the edge, with `normal` from the edge to
+--- the hub and `groundNormal` the step's top. Nil when the wall is no step, or too tall to climb.
+local function findStepEdge(wall, hubPosition, right, up, filter)
+  local probe = wall.contactPosition - wall.normal * STEP_PROBE_DEPTH
+  local topTrace = util.TraceLine({
+    start = probe + up * (hubPosition - probe):Dot(up),
+    endpos = probe,
+    filter = filter,
+    mask = MASK_SOLID,
+  })
+
+  -- Starting in solid, the wall reaches past the hub.
+  if (not topTrace.Hit or topTrace.StartSolid or topTrace.HitNormal:Dot(up) < MIN_GROUND_NORMAL_UP) then
+    return nil
+  end
+
+  local edge = topTrace.HitPos + wall.normal * STEP_PROBE_DEPTH
+  local offset = hubPosition - edge
+  offset:Sub(right * offset:Dot(right))
+
+  local distance = offset:Length()
+
+  if (distance < 1e-3) then
+    return nil
+  end
+
+  offset:Div(distance)
+
+  if (offset:Dot(up) < MIN_STEP_EDGE_NORMAL_UP) then
+    return nil
+  end
+
+  return { distance = distance, contactPosition = edge, normal = offset, groundNormal = topTrace.HitNormal }
+end
+
 --- Finds the nearest ground and wall within the wheel disc, so the contact stays correct while leaning or on slopes.
 --- @param wheelIndex number
 --- @param filter? table Defaults to `ENT:GetWheelTraceFilter()`
 --- @param position? Vector Defaults to the bike's position
 --- @param angles? Angle Defaults to the bike's angles
---- @return table # { hubPosition, isHit, isGrounded, compression, contactPosition?, normal?, wall? }, where `wall` is
---- { hubPosition, compression, contactPosition, normal } while the wheel presses against one
+--- @return table # { hubPosition, isHit, isGrounded, compression, contactPosition?, normal?, groundNormal?, wall? },
+--- where `normal` is the way the ground pushes the wheel and `groundNormal` the surface it rides on, which differ on
+--- the edge of a step. `wall` is { hubPosition, compression, contactPosition, normal } while the wheel presses against
+--- one
 function ENT:TraceWheel(wheelIndex, filter, position, angles)
   position = position or self:GetPos()
   angles = angles or self:GetAngles()
@@ -234,17 +279,33 @@ function ENT:TraceWheel(wheelIndex, filter, position, angles)
 
   if (nearestGround) then
     nearestGround = refineWheelHit(nearestGround, hubPosition, right, up, radius, filter)
-
-    contact.isHit = true
-    contact.contactPosition = nearestGround.contactPosition
-    contact.normal = nearestGround.normal
-    contact.compression = radius - nearestGround.distance
-    contact.isGrounded = contact.compression > 0
   end
 
   if (nearestWall) then
     nearestWall = refineWheelHit(nearestWall, hubPosition, right, up, radius, filter)
 
+    local stepEdge = findStepEdge(nearestWall, hubPosition, right, up, filter)
+
+    -- The edge stands in for the step's face, so the wheel rolls up over it instead of being pushed back.
+    if (stepEdge) then
+      nearestWall = nil
+
+      if (not nearestGround or stepEdge.distance < nearestGround.distance) then
+        nearestGround = stepEdge
+      end
+    end
+  end
+
+  if (nearestGround) then
+    contact.isHit = true
+    contact.contactPosition = nearestGround.contactPosition
+    contact.normal = nearestGround.normal
+    contact.groundNormal = nearestGround.groundNormal or nearestGround.normal
+    contact.compression = radius - nearestGround.distance
+    contact.isGrounded = contact.compression > 0
+  end
+
+  if (nearestWall) then
     if (nearestWall.distance < radius) then
       contact.wall = {
         hubPosition = hubPosition,

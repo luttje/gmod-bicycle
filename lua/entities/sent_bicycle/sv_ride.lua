@@ -290,7 +290,9 @@ function ENT:ApplyTyreSuspension(physics, ride, deltaTime)
           ride.isRearGrounded = true
         end
 
-        groundNormalSum:Add(contact.normal)
+        -- On a step's edge the bike rides onto the step's top, it isn't steered up the edge like a ramp, which would
+        -- launch it off a curb.
+        groundNormalSum:Add(contact.groundNormal)
         groundedContacts[index] = contact
       end
 
