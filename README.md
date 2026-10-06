@@ -47,6 +47,21 @@ Knocked the bike over? Press **E** on it and it stands back up when you get on.
 > Water slows you down, and riding in until the bike is half under throws you off. Server admins can change both, or turn
 > the throwing off, under **Water** in the server settings.
 
+### In the air
+| Key | Action |
+|---|---|
+| A / D | Spin the bike round, such as to turn round up a quarter pipe and ride back down it |
+| W / S | Tip the nose down / up |
+| W (above the top of a quarter pipe) | Spine transfer: carries you over the top and into the quarter pipe behind it |
+
+> [!TIP]
+> Keys you were already holding as you took off, such as pedalling or steering into a jump, only control the bike in
+> the air once you press them again.
+
+> [!NOTE]
+> Server admins can turn these controls off under **Advanced air control** in the server settings, for the older,
+> simpler air handling.
+
 ### Tricks
 | Trick | When | Keys | Notes |
 |---|---|---|---|

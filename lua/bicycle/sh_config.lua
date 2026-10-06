@@ -166,6 +166,29 @@ bicycle.tuningSections = {
         description = "How strongly bikes keep their nose along their path in the air (0-1), 0 leaves it to physics",
       },
       {
+        name = "advanced_air_control",
+        label = "Advanced air control",
+        type = "bool",
+        default = 1,
+        description = "Spin (A / D) and tip (W / S) the bike in the air, vert airs and spine transfers",
+      },
+      {
+        name = "air_turn_speed",
+        label = "Air turn speed",
+        default = 180,
+        min = 0,
+        max = 1000,
+        description = "How fast A / D spin the bike round in the air (deg/s), 0 turns it off",
+      },
+      {
+        name = "air_pitch_speed",
+        label = "Air pitch speed",
+        default = 170,
+        min = 0,
+        max = 1000,
+        description = "How fast W / S tip the nose down / up in the air (deg/s), 0 turns it off",
+      },
+      {
         name = "steer_max",
         label = "Max steer (slow)",
         default = 45,
@@ -384,7 +407,7 @@ bicycle.tuningSections = {
         type = "bool",
         default = 0,
         description = "Riders with no room to stand beside the bike get off above it instead of staying on, "
-          .. "which could put them past a player clip the bike rode through",
+            .. "which could put them past a player clip the bike rode through",
       },
       {
         name = "ragmod_crash",

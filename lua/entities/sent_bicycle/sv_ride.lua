@@ -45,6 +45,20 @@ local AIR_PITCH_MAX = 25
 local AIR_PITCH_GAIN = 4
 local AIR_PITCH_MAX_SPEED = 120
 local AIR_PITCH_RESPONSE = 6
+-- Off a steeper slope, such as a quarter pipe or spine, the nose follows the path further, up to the whole way and as
+-- steep as the slope it left, and faster, so it comes back down along the ramp.
+local AIR_PITCH_MAX_SPEED_STEEP = 240
+local STEEPEST_SLOPE = 90
+
+-- How quickly the bike's spin follows the rider's air controls (1/s).
+local AIR_CONTROL_RESPONSE = 10
+-- Going up a slope at least this steep (deg) into the air is a vert air: the bike can't drift away from the ramp, only
+-- over its top, so it comes back down onto the ramp instead of onto the flat in front of it.
+local VERT_AIR_MIN_SLOPE = 60
+-- A spine transfer is steered as if it lands at least this soon (s), so pressing late doesn't throw the bike across.
+local MIN_TRANSFER_TIME = 0.1
+-- How fast a spine transfer may tip the nose over (deg/s).
+local MAX_TRANSFER_PITCH_SPEED = 720
 
 -- The bike's path turns with the ground by at most this much per tick (deg), larger jumps aren't the same surface.
 local MAX_GROUND_FOLLOW_ANGLE = 45
@@ -209,6 +223,7 @@ function ENT:MeasureRide(physics, rider)
     angularVelocity = physics:LocalToWorldVector(physics:GetAngleVelocity()),
     mass = physics:GetMass(),
     massCenter = physics:GetMassCenter(),
+    massCenterPosition = physics:LocalToWorld(physics:GetMassCenter()),
     gravity = getGravity(),
     gravityVector = physenv.GetGravity(),
     -- How far the bike is under water, 0-1
@@ -216,7 +231,10 @@ function ENT:MeasureRide(physics, rider)
     isRidden = isRidden,
     isCrashed = isCrashed,
     isOnSide = isOnSide,
-    isControlled = not isCrashed and not self.isPhysgunHeld and not isOnSide and (isRidden or canParkUpright),
+    -- A rider turning the bike in the air may lie it on its side, such as along a quarter pipe halfway round.
+    isControlled = not isCrashed and not self.isPhysgunHeld
+        and (not isOnSide or (isRidden and self.isAirTurning))
+        and (isRidden or canParkUpright),
   }
 end
 
@@ -301,6 +319,17 @@ function ENT:ApplyTyreSuspension(physics, ride, deltaTime)
   end
 
   ride.groundNormal = ride.groundedCount > 0 and groundNormalSum:GetNormalized() or vector_up
+  ride.groundContactPosition = nil
+
+  if (ride.groundedCount > 0) then
+    local contactPositionSum = Vector(0, 0, 0)
+
+    for _, contact in pairs(groundedContacts) do
+      contactPositionSum:Add(contact.contactPosition)
+    end
+
+    ride.groundContactPosition = contactPositionSum / ride.groundedCount
+  end
   ride.forwardAlongGround = projectOntoPlane(ride.forward, ride.groundNormal)
   ride.sideAlongGround = projectOntoPlane(ride.right, ride.groundNormal)
   ride.isGroundUneven = false
@@ -554,6 +583,21 @@ function ENT:GetLandingPitchCorrection(ride, deltaTime)
   return ride.right * (-currentPitchSpeed * getBlendFraction(LANDING_PITCH_DAMPING, deltaTime))
 end
 
+--- Unlike `ride.pitch`, keeps counting past 90 once the nose tips over backwards, such as straight up a quarter pipe,
+--- where the pitch would otherwise read as short of vertical and be pushed further over.
+--- @return number # Degrees, positive is nose up
+local function getUnwrappedPitch(ride)
+  local heading = vector_up:Cross(ride.right)
+  local headingLength = heading:Length()
+
+  -- On its side the bike has no pitch to speak of.
+  if (headingLength < 1e-2) then
+    return ride.pitch
+  end
+
+  return math.deg(math.atan2(ride.forward.z, ride.forward:Dot(heading) / headingLength))
+end
+
 --- Not realistic, but riding off jumps without tumbling over is more fun. Scaled by bicycle_air_pitch_control.
 --- @return Vector # Angular velocity correction in world space, deg/s
 function ENT:GetAirPitchCorrection(ride, deltaTime)
@@ -564,16 +608,203 @@ function ENT:GetAirPitchCorrection(ride, deltaTime)
     pathPitch = -pathPitch
   end
 
-  local targetPitch = math.Clamp(pathPitch * AIR_PITCH_FOLLOW, -AIR_PITCH_MAX, AIR_PITCH_MAX)
-  local wantedPitchSpeed = math.Clamp(
-    (targetPitch - ride.pitch) * AIR_PITCH_GAIN,
-    -AIR_PITCH_MAX_SPEED,
-    AIR_PITCH_MAX_SPEED
-  )
+  local isAdvanced = bicycle.getTuningBool("advanced_air_control")
+  local maxPitch = isAdvanced and math.max(AIR_PITCH_MAX, self.takeoffSlope) or AIR_PITCH_MAX
+  local steepness = (maxPitch - AIR_PITCH_MAX) / (STEEPEST_SLOPE - AIR_PITCH_MAX)
+  local maxPitchSpeed = Lerp(steepness, AIR_PITCH_MAX_SPEED, AIR_PITCH_MAX_SPEED_STEEP)
+  local targetPitch = math.Clamp(pathPitch * Lerp(steepness, AIR_PITCH_FOLLOW, 1), -maxPitch, maxPitch)
+  local pitchError = math.NormalizeAngle(targetPitch - (isAdvanced and getUnwrappedPitch(ride) or ride.pitch))
+  local wantedPitchSpeed = math.Clamp(pitchError * AIR_PITCH_GAIN, -maxPitchSpeed, maxPitchSpeed)
   local currentPitchSpeed = ride.angularVelocity:Dot(ride.right)
   local blend = getBlendFraction(AIR_PITCH_RESPONSE, deltaTime) * bicycle.getTuning("air_pitch_control")
 
   return ride.right * ((wantedPitchSpeed - currentPitchSpeed) * blend)
+end
+
+--- Keys already held when the bike leaves the ground, such as pedalling or carving off a jump, keep riding as before
+--- and only control the bike in the air once pressed again. Adds `airPitchDirection` to `ride`: 1 pitches the nose up,
+--- -1 down.
+function ENT:ReadAirControls(ride, input)
+  if (not bicycle.getTuningBool("advanced_air_control")) then
+    self.vertAir = nil
+    self.isAirSpinControlled = false
+    self.isAirTurning = false
+    ride.airPitchDirection = 0
+
+    return
+  end
+
+  local heldSinceTakeoff = self.airKeysHeldSinceTakeoff
+
+  if (ride.groundedCount > 0 or not ride.isRidden) then
+    heldSinceTakeoff.steerDirection = input.steerDirection
+    heldSinceTakeoff.isPedalHeld = input.isPedalHeld
+    heldSinceTakeoff.isBrakeHeld = input.isBrakeHeld
+    self.takeoffSlope = math.abs(bicycle.getElevation(ride.forwardAlongGround))
+    self.vertAir = self:MeasureVertAirTakeoff(ride)
+    self.isAirSpinControlled = false
+    self.isAirTurning = false
+    ride.airPitchDirection = 0
+
+    return
+  end
+
+  if (heldSinceTakeoff.steerDirection ~= input.steerDirection) then
+    heldSinceTakeoff.steerDirection = 0
+  end
+
+  heldSinceTakeoff.isPedalHeld = heldSinceTakeoff.isPedalHeld and input.isPedalHeld
+  heldSinceTakeoff.isBrakeHeld = heldSinceTakeoff.isBrakeHeld and input.isBrakeHeld
+
+  -- Once the rider steers in the air, the bike only spins while they do, for the rest of the jump.
+  local isFreshSteer = input.steerDirection ~= 0 and heldSinceTakeoff.steerDirection == 0
+
+  if (isFreshSteer and bicycle.getTuning("air_turn_speed") > 0) then
+    self.isAirSpinControlled = true
+  end
+
+  self.isAirTurning = self.isAirSpinControlled and self.steerFraction ~= 0
+
+  -- Ctrl and right mouse turn W and S into pose tricks instead.
+  if (input.isTrickHeld or input.isWheelieHeld or bicycle.getTuning("air_pitch_speed") <= 0) then
+    ride.airPitchDirection = 0
+  else
+    ride.airPitchDirection = ((input.isBrakeHeld and not heldSinceTakeoff.isBrakeHeld) and 1 or 0)
+        - ((input.isPedalHeld and not heldSinceTakeoff.isPedalHeld) and 1 or 0)
+  end
+end
+
+--- Called every tick on the ground, so the last one holds the take-off.
+--- @return table? # `{ away, rampPoint, takeoffOffset, takeoffHeight, isTransferring, timeLeft? }`, nil unless the bike
+--- goes up steep enough ground for a vert air. `away` is horizontal, out of the ramp, and `takeoffOffset` how far the
+--- centre of mass was out from the ramp at `rampPoint`.
+function ENT:MeasureVertAirTakeoff(ride)
+  if (self.takeoffSlope < VERT_AIR_MIN_SLOPE or ride.velocity.z <= 0 or not ride.groundContactPosition) then
+    return nil
+  end
+
+  local away = Vector(ride.groundNormal.x, ride.groundNormal.y, 0)
+
+  if (away:LengthSqr() < 1e-2) then
+    return nil
+  end
+
+  away:Normalize()
+
+  return {
+    away = away,
+    rampPoint = ride.groundContactPosition,
+    takeoffOffset = (ride.massCenterPosition - ride.groundContactPosition):Dot(away),
+    takeoffHeight = ride.massCenterPosition.z,
+    isTransferring = false,
+  }
+end
+
+--- @return number # Seconds until the centre of mass falls back to `height`, at least MIN_TRANSFER_TIME
+local function getTimeToFallTo(ride, height)
+  local verticalSpeed = ride.velocity.z
+  local rise = ride.massCenterPosition.z - height
+  local fallTime = (verticalSpeed + math.sqrt(math.max(verticalSpeed * verticalSpeed + 2 * ride.gravity * rise, 0)))
+      / ride.gravity
+
+  return math.max(fallTime, MIN_TRANSFER_TIME)
+end
+
+--- Whether the bike can move by `crossing` without passing through anything, such as once it's above a spine.
+function ENT:IsClearToCross(ride, crossing)
+  local filter = self:GetWheelTraceFilter()
+  local starts = { ride.massCenterPosition }
+
+  for _, wheel in ipairs(self.Wheels) do
+    starts[#starts + 1] = LocalToWorld(wheel.position, angle_zero, ride.position, ride.angles)
+  end
+
+  for _, start in ipairs(starts) do
+    local trace = util.TraceLine({ start = start, endpos = start + crossing, filter = filter, mask = MASK_SOLID })
+
+    if (trace.Hit) then
+      return false
+    end
+  end
+
+  return true
+end
+
+--- Arcade-feel: in a vert air, such as straight up a quarter pipe, the tyres springing back off the ramp would carry
+--- the bike away from it to land on the flat, so its horizontal speed away from the ramp is taken. Pressing W with
+--- nothing over the top transfers: as if there were a quarter pipe right behind this one, such as on a spine, the bike
+--- is steered to land as far behind the ramp as it took off in front of it, at the same height.
+function ENT:UpdateVertAir(physics, ride)
+  local vertAir = self.vertAir
+
+  if (not vertAir or ride.groundedCount > 0 or not ride.isRidden or ride.isCrashed) then
+    return
+  end
+
+  local away = vertAir.away
+  local offset = (ride.massCenterPosition - vertAir.rampPoint):Dot(away)
+
+  if (not vertAir.isTransferring and ride.airPitchDirection < 0
+        and self:IsClearToCross(ride, away * -(offset + vertAir.takeoffOffset))) then
+    vertAir.isTransferring = true
+  end
+
+  local awaySpeed = ride.velocity:Dot(away)
+  local wantedAwaySpeed = math.min(awaySpeed, 0)
+
+  if (vertAir.isTransferring) then
+    vertAir.timeLeft = getTimeToFallTo(ride, vertAir.takeoffHeight)
+    wantedAwaySpeed = (-vertAir.takeoffOffset - offset) / vertAir.timeLeft
+  end
+
+  local speedChange = away * (wantedAwaySpeed - awaySpeed)
+
+  physics:AddVelocity(speedChange)
+  ride.velocity = ride.velocity + speedChange
+end
+
+--- A / D spin the bike around its own up, which up a quarter pipe turns it round to come back down nose first, and
+--- W / S pitch its nose, such as over a spine. Without W / S the nose follows the bike's path.
+--- @return Vector # Angular velocity correction in world space, deg/s
+function ENT:GetAirControlCorrection(ride, deltaTime)
+  local correction = Vector(0, 0, 0)
+  local blend = getBlendFraction(AIR_CONTROL_RESPONSE, deltaTime)
+
+  if (self.isAirSpinControlled) then
+    local up = ride.angles:Up()
+    -- Positive turns left.
+    local wantedSpinSpeed = -self.steerFraction * bicycle.getTuning("air_turn_speed")
+
+    correction:Add(up * ((wantedSpinSpeed - ride.angularVelocity:Dot(up)) * blend))
+  end
+
+  -- A flip turns the bike over itself.
+  if (self.isRotatingBike) then
+    return correction
+  end
+
+  local vertAir = self.vertAir
+
+  if (vertAir and vertAir.isTransferring) then
+    -- Tips the nose over the top, to come down the other side as steeply as it went up by the time it lands there.
+    local pitchError = -self.takeoffSlope - getUnwrappedPitch(ride)
+    local wantedPitchSpeed = math.Clamp(
+      pitchError / vertAir.timeLeft,
+      -MAX_TRANSFER_PITCH_SPEED,
+      MAX_TRANSFER_PITCH_SPEED
+    )
+
+    correction:Add(ride.right * ((wantedPitchSpeed - ride.angularVelocity:Dot(ride.right)) * blend))
+  elseif (ride.airPitchDirection ~= 0) then
+    local wantedPitchSpeed = ride.airPitchDirection * bicycle.getTuning("air_pitch_speed")
+
+    correction:Add(ride.right * ((wantedPitchSpeed - ride.angularVelocity:Dot(ride.right)) * blend))
+  elseif (not self.isAirTurning) then
+    -- Mid-turn the nose may point along the ramp, where pitching it would only spin the bike back.
+    correction:Add(self:GetAirPitchCorrection(ride, deltaTime))
+  end
+
+  return correction
 end
 
 --- Keeps the bike balanced, leaning into the turn the handlebar asks for and heading where that lean allows.
@@ -594,17 +825,18 @@ function ENT:ApplyBalance(physics, ride, input, steerAngle, deltaTime)
   end
 
   local correction = self:GetHeadingCorrection(ride, steeredYawRate, lateralAcceleration, deltaTime)
-  correction:Add(self:GetLeanCorrection(ride, targetLean, deltaTime))
+
+  -- Turning in the air leaves the lean to the rider, so the bike can lie along a quarter pipe halfway round.
+  if (not self.isAirTurning) then
+    correction:Add(self:GetLeanCorrection(ride, targetLean, deltaTime))
+  end
 
   if (ride.isWheelieing and ride.isRearGrounded) then
     correction:Add(self:GetPitchHoldCorrection(ride, bicycle.getTuning("wheelie_angle"), deltaTime))
   elseif (ride.isStoppieing and ride.isFrontGrounded) then
     correction:Add(self:GetPitchHoldCorrection(ride, -bicycle.getTuning("stoppie_angle"), deltaTime))
   elseif (ride.groundedCount == 0) then
-    -- A flip turns the bike over itself.
-    if (not self.isRotatingBike) then
-      correction:Add(self:GetAirPitchCorrection(ride, deltaTime))
-    end
+    correction:Add(self:GetAirControlCorrection(ride, deltaTime))
   else
     correction:Add(self:GetLandingPitchCorrection(ride, deltaTime))
   end
@@ -685,6 +917,10 @@ function ENT:PhysicsSimulate(physics, deltaTime)
   -- Steering spins a trick while its button is held, so the bike doesn't also land crossed up.
   local isSteeringTrick = self:UpdateTricks(physics, ride, input, rider, deltaTime)
   local steerAngle = self:UpdateSteering(isSteeringTrick and 0 or input.steerDirection, ride.absoluteSpeed, deltaTime)
+
+  self:ReadAirControls(ride, input)
+  self:UpdateVertAir(physics, ride)
+
   local isPedalling = input.isPedalHeld and ride.isRearGrounded
 
   if (input.isBellPressed) then

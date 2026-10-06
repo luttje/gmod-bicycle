@@ -126,6 +126,10 @@ function ENT:Initialize()
   self.isStoppieing = false
   self.restingOffWheelsTime = 0
   self.trickStates = {}
+  self.airKeysHeldSinceTakeoff = { steerDirection = 0, isPedalHeld = false, isBrakeHeld = false }
+  self.takeoffSlope = 0
+  self.isAirSpinControlled = false
+  self.isAirTurning = false
 
   self:StartMotionController()
   self:CreateSeat()
