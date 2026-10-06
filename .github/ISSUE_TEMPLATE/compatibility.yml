@@ -53,10 +53,7 @@ body:
     label: Console errors
     description: |
       Copy every Lua error from the console (open it with `~`), including the full stack trace.
-      Write "none" if there are no errors.
     render: text
-  validations:
-    required: true
 
 - type: textarea
   id: screenshots
