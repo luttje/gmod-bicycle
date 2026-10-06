@@ -387,6 +387,13 @@ bicycle.tuningSections = {
           .. "which could put them past a player clip the bike rode through",
       },
       {
+        name = "ragmod_crash",
+        label = "Ragdoll crashing riders (RagMod)",
+        type = "bool",
+        default = 1,
+        description = "When RagMod is installed and enabled, riders flying over the handlebars become a RagMod ragdoll",
+      },
+      {
         name = "rider_seq",
         label = "Rider sequence",
         type = "string",

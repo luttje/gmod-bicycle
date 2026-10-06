@@ -134,7 +134,9 @@ end)
 ```
 
 When a rider flies over the handlebars, the server runs the `BicycleRiderCrashed` hook once they're off the bike, just
-before they're thrown. Return `false` to keep them from being thrown, for example to throw them your own way:
+before they're thrown. When RagMod is installed and enabled, and the
+`bicycle_ragmod_crash` setting is on (the default), they're thrown as a RagMod ragdoll. Return `false` to keep them from
+being thrown, for example to throw them your own way:
 
 ```lua
 --- @param player Player The rider that crashed

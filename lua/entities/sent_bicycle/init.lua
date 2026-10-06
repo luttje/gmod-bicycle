@@ -38,6 +38,8 @@ local FALLBACK_DISMOUNT_HEIGHT = 40
 local MAX_DISMOUNT_CORRECTION_DISTANCE = 128
 local CRASH_EJECT_VELOCITY_SCALE = 0.8
 local CRASH_EJECT_UPWARD_SPEED = 160
+-- How long a crashed rider's RagMod ragdoll passes through the bike they were put down overlapping.
+local RAGMOD_BIKE_NO_COLLIDE_TIME = 0.2
 
 local IMPACT_SOUND_MIN_SPEED = 150
 local IMPACT_SOUND_INTERVAL = 0.2
@@ -513,6 +515,38 @@ function ENT:GetDismountPosition(player, isCrashing)
       or self:FindFallbackDismountPosition(player)
 end
 
+--- Throws a crashed rider as a RagMod ragdoll, when RagMod is installed and both its and our server settings allow it.
+--- @param player Player
+--- @param ejectVelocity Vector
+--- @return boolean # Whether the rider became a ragdoll
+local function tryRagmodRagdoll(player, ejectVelocity)
+  if (not bicycle.getTuningBool("ragmod_crash")) then
+    return false
+  end
+
+  if (not ragmod or not ragmod.TryToRagdoll or not RagModOptions or not RagModOptions.Enabled()) then
+    return false
+  end
+
+  local ragdoll = ragmod:TryToRagdoll(player)
+
+  if (not IsValid(ragdoll)) then
+    return false
+  end
+
+  ragdoll:SetCollisionGroup(COLLISION_GROUP_WEAPON)
+  ragdoll:SetVelocity(ejectVelocity)
+  ragdoll:PlayRagSound()
+
+  timer.Simple(RAGMOD_BIKE_NO_COLLIDE_TIME, function()
+    if (IsValid(ragdoll) and ragdoll:GetCollisionGroup() == COLLISION_GROUP_WEAPON) then
+      ragdoll:SetCollisionGroup(COLLISION_GROUP_NONE)
+    end
+  end)
+
+  return true
+end
+
 function ENT:OnRiderLeave(player)
   if (self:GetRider() ~= player) then
     return
@@ -563,7 +597,8 @@ function ENT:OnRiderLeave(player)
 
       -- Lets gamemodes react to the rider flying over the handlebars, such as by knocking them out. Returning false
       -- keeps the rider from being thrown, so the gamemode can handle that itself.
-      if (hook.Run("BicycleRiderCrashed", player, self, ejectVelocity) ~= false) then
+      if (hook.Run("BicycleRiderCrashed", player, self, ejectVelocity) ~= false
+            and not tryRagmodRagdoll(player, ejectVelocity)) then
         player:SetVelocity(ejectVelocity)
       end
     end
