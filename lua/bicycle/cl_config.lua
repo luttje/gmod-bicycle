@@ -235,4 +235,5 @@ bicycle.debugColors = {
   editorSeat = Color(80, 200, 255),
   editorGrip = Color(255, 160, 40),
   editorFoot = Color(80, 255, 120),
+  editorPassenger = Color(255, 120, 200),
 }

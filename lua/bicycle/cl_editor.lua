@@ -32,6 +32,9 @@ local SNIPPET_KEY_ORDER = {
   "pedalCenterOffset",
   "footBallHeight",
   "gripOffset",
+  "bodygroups",
+  "passengerAttachment",
+  "passengerSeatOffset",
 }
 -- Fallbacks for what the server measures from the model on spawn.
 local MEASURED_KEYS = { "wheelRadius", "rearHub", "frontHub", "seatPosition" }
@@ -61,6 +64,17 @@ local function formatValue(value)
     return formatNumber(value)
   elseif (isstring(value)) then
     return string.format("%q", value)
+  elseif (istable(value)) then
+    local keys = table.GetKeys(value)
+    table.sort(keys)
+
+    local entries = {}
+
+    for index, key in ipairs(keys) do
+      entries[index] = string.format("%s = %s", key, formatValue(value[key]))
+    end
+
+    return string.format("{ %s }", table.concat(entries, ", "))
   end
 
   return tostring(value)
@@ -319,7 +333,8 @@ local function openEditor(bike)
   intro:SetAutoStretchVertical(true)
   intro:SetText(
     "Changes apply live to every bike of this model until the map changes. Paste the registration below into your "
-    .. "addon to keep them. Markers show the seat (blue, with the rider's back), hands (orange) and feet (green)."
+    .. "addon to keep them. Markers show the seat (blue, with the rider's back), hands (orange), feet (green) and "
+    .. "passenger seat (pink)."
   )
 
   local pendingValues = {}
@@ -328,6 +343,10 @@ local function openEditor(bike)
   local forms = {}
 
   for _, setting in ipairs(bicycle.editor.SETTINGS) do
+    if (setting.isAvailable and not setting.isAvailable(bike)) then
+      continue
+    end
+
     local form = forms[setting.section]
 
     if (not form) then

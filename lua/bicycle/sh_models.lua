@@ -46,6 +46,12 @@ local DEFINITION_FIELDS = {
   footBallHeight = "FootBallHeight",
   -- Where the hands hold relative to the grip attachments: forward, outward (mirrored for each side) and up.
   gripOffset = "GripOffset",
+  -- Bodygroups set on spawn, as { [bodygroup name] = submodel index }.
+  bodygroups = "BodyGroups",
+  -- The attachment a passenger seat is put at. Without it the bike has no passenger seat.
+  passengerAttachment = "PassengerAttachment",
+  -- Where the passenger sits relative to the passenger attachment.
+  passengerSeatOffset = "PassengerSeatOffset",
   -- The measurements below are read from the model on spawn, these are only used until then or if that fails.
   wheelRadius = "WheelRadius",
   seatPosition = "SeatPosition",
@@ -171,9 +177,9 @@ hook.Add("OnGamemodeLoaded", "bicycle.registerModels", function()
   hook.Run("BicycleRegisterModels")
 end)
 
-hook.Add("BicycleRegisterModels", "bicycle.defaultModel", function()
+hook.Add("BicycleRegisterModels", "bicycle.defaultModels", function()
   bicycle.registerModel("default", {
-    name = "Colourable Mountain Bike",
+    name = "Mountain Bike",
     model = "models/bicycle/bicycle.mdl",
     icon = "entities/colourable_mountain_bike.png",
     randomColor = true,
@@ -195,11 +201,37 @@ hook.Add("BicycleRegisterModels", "bicycle.defaultModel", function()
     frontHub = Vector(25.02, 0, -1.74),
     seatPosition = Vector(-12.42, 0.02, 21.16),
   })
-end)
 
-hook.Add("BicycleRegisterModels", "bicycle.bmxModel", function()
+  bicycle.registerModel("default_baby_seat", {
+    name = "Mountain Bike (Baby Seat)",
+    model = "models/bicycle/bicycle.mdl",
+    icon = "entities/colourable_mountain_bike_baby_seat.png",
+    randomColor = true,
+    mass = 15,
+    gearRatio = 2.8,
+    wheelHullScale = 0.7,
+    seatOffset = Vector(-7.02, 0, -1.75),
+    seatPitch = 33.55,
+    sprintLeanPitch = 25,
+    wheelieLeanPitch = 0,
+    wheelieSeatShift = Vector(-1.93, 0, 1.58),
+    leanForwardPitch = 15,
+    leanForwardSeatShift = Vector(3, 0, 1),
+    pedalCenterOffset = 3.38,
+    footBallHeight = 1,
+    gripOffset = Vector(-0.12, -0.58, 1.17),
+    bodygroups = { baby_seat = 1 },
+    passengerAttachment = "baby_seat",
+    passengerSeatOffset = Vector(-0.35, 0, -5.96),
+    -- Measured on models/bicycle/bicycle.mdl.
+    wheelRadius = 16.01,
+    rearHub = Vector(-22.57, 0, -1.74),
+    frontHub = Vector(25.02, 0, -1.74),
+    seatPosition = Vector(-12.42, 0.02, 21.16),
+  })
+
   bicycle.registerModel("bmx", {
-    name = "Colourable BMX",
+    name = "BMX",
     model = "models/bicycle/bmx.mdl",
     icon = "entities/colourable_mountain_bmx.png",
     randomColor = true,

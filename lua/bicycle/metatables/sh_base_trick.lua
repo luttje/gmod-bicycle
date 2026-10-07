@@ -76,6 +76,17 @@ end
 function BASE_TRICK:PoseBike(bike, angle, frame)
 end
 
+--- Client, how the trick turns the frame, if it does. The passenger is carried along by it.
+--- @param bike Entity
+--- @param angle number
+--- @param frame table
+--- @return Vector? pivot World space, nil when the frame isn't turned
+--- @return Vector? axis World space, normalized
+--- @return number? degrees Counter-clockwise looking down the axis
+function BASE_TRICK:GetFrameRotation(bike, angle, frame)
+  return nil
+end
+
 --- Client, moves where the rider's foot goes.
 --- @param bike Entity
 --- @param leg table `leg.side` is 1 on the bike's left, -1 on its right

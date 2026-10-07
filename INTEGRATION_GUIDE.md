@@ -60,7 +60,8 @@ bicycle.trick.register(TRICK)
 ```
 
 A trick can also apply forces to the bike (`Simulate`), judge its own landing (`Land`), turn the real bike over
-(`rotatesBike`) and move the rider's hands and feet (`AdjustGripTarget`, `AdjustFootTarget`). All of it is documented
+(`rotatesBike`), move the rider's hands and feet (`AdjustGripTarget`, `AdjustFootTarget`) and carry the passenger
+along when it turns the frame (`GetFrameRotation`). All of it is documented
 in [`lua/bicycle/metatables/sh_base_trick.lua`](lua/bicycle/metatables/sh_base_trick.lua). The built-in tricks are
 complete examples, such as the [tailwhip](lua/bicycle/tricks/tailwhip.lua), the [backflip](lua/bicycle/tricks/backflip.lua)
 and the [no-hander](lua/bicycle/tricks/no_hander.lua).
@@ -76,8 +77,9 @@ These hooks let gamemodes and other addons react to bikes. They run on the serve
 ```lua
 --- @param player Player The player trying to get on
 --- @param bike Entity The bike
+--- @param isPassenger boolean? True when they get on as the passenger, on bikes with a passenger seat
 --- @return boolean? Return false to keep the player off the bike
-hook.Add("BicycleCanMount", "myaddon.mount", function(player, bike)
+hook.Add("BicycleCanMount", "myaddon.mount", function(player, bike, isPassenger)
 end)
 ```
 
@@ -103,6 +105,21 @@ end)
 --- @param bike Entity The bike
 --- @param isCrash boolean Whether they were thrown off in a crash, see BicycleRiderCrashed
 hook.Add("BicycleRiderDismounted", "myaddon.dismounted", function(player, bike, isCrash)
+end)
+```
+
+Passengers get `BicyclePassengerMounted` and `BicyclePassengerDismounted` instead. A crash throws the passenger off
+too:
+
+```lua
+--- @param player Player The passenger
+--- @param bike Entity The bike
+hook.Add("BicyclePassengerMounted", "myaddon.passengerMounted", function(player, bike)
+end)
+
+--- @param player Player The passenger
+--- @param bike Entity The bike
+hook.Add("BicyclePassengerDismounted", "myaddon.passengerDismounted", function(player, bike)
 end)
 ```
 

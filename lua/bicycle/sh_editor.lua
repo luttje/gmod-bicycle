@@ -1,6 +1,7 @@
 bicycle.editor = bicycle.editor or {}
 
 -- `axes` marks a vector setting with a slider per axis. The slider range is also what the server accepts.
+-- `isAvailable(bike)`, when given, hides the setting from the editor for bikes it doesn't apply to.
 bicycle.editor.SETTINGS = {
   {
     key = "seatOffset",
@@ -95,6 +96,19 @@ bicycle.editor.SETTINGS = {
     max = 5,
     decimals = 2,
     help = "How far above the pedal's axle the ball of the foot sits.",
+  },
+  {
+    key = "passengerSeatOffset",
+    section = "Passenger",
+    label = "Passenger seat offset",
+    axes = { "forward", "left", "up" },
+    min = -30,
+    max = 30,
+    decimals = 2,
+    help = "Where the passenger sits relative to the passenger attachment.",
+    isAvailable = function(bike)
+      return bike.PassengerAttachment ~= nil
+    end,
   },
   {
     key = "mass",

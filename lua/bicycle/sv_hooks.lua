@@ -3,6 +3,13 @@ hook.Add("PlayerEnteredVehicle", "bicycle.riderEnter", function(player, vehicle)
 
   if (bike) then
     bike:OnRiderEnter(player)
+    return
+  end
+
+  bike = bicycle.getFromPassengerSeat(vehicle)
+
+  if (bike) then
+    bike:OnPassengerEnter(player)
   end
 end)
 
@@ -19,6 +26,13 @@ hook.Add("PlayerLeaveVehicle", "bicycle.riderLeave", function(player, vehicle)
 
   if (bike) then
     bike:OnRiderLeave(player)
+    return
+  end
+
+  bike = bicycle.getFromPassengerSeat(vehicle)
+
+  if (bike) then
+    bike:OnPassengerLeave(player)
   end
 end)
 
@@ -32,9 +46,9 @@ hook.Add("KeyPress", "bicycle.riderKeyPress", function(player, key)
   end
 end)
 
--- Only admins may pick up a bike someone is riding, anyone else could use it to fling the rider around.
+-- Only admins may pick up a bike someone sits on, anyone else could use it to fling the rider or passenger around.
 hook.Add("PhysgunPickup", "bicycle.physgunRidden", function(player, entity)
-  if (entity.IsBicycle and IsValid(entity:GetRider())
+  if (entity.IsBicycle and (IsValid(entity:GetRider()) or IsValid(entity:GetPassenger()))
         and not bicycle.hasPermission(player, bicycle.PRIVILEGES.physgunRidden)) then
     return false
   end

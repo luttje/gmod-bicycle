@@ -14,7 +14,7 @@ start Garry's Mod.
 **Manually:** download this repository and put the contents of this repo in a `bicycle` folder in `garrysmod/addons/`.
 
 ## Getting started
-1. Open the spawn menu (**Q**), go to **Entities → Fun + Games** and spawn the **Colourable Mountain Bike**. Every
+1. Open the spawn menu (**Q**), go to **Entities → Fun + Games** and spawn the **Mountain Bike**. Every
    bike spawns in a random color, and you can repaint it with the Color tool.
 2. Walk up to it and press **E** to get on.
 3. Hold **W** to pedal and use **A** / **D** to steer.
@@ -120,6 +120,8 @@ To build a bike model from scratch, see [📚 `MODELING_GUIDE.md`](MODELING_GUID
 The `models/bicycle/bicycle.mdl`/`modelsrc/source/bicycle.fbx` model is "Bicycle Game Asset" (https://skfb.ly/oyZ6w) by RayznGames is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/)
 
 The `models/bicycle/bmx.mdl`/`modelsrc/source/bmx.fbx` model is "Bmx Bike" (https://skfb.ly/YWSG) by Grimecent is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+The baby seat bodygroup is taken from "5 Kinds of Bikes" (https://skfb.ly/6WT9A) by Vlapogr is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 
 Changes made to both these assets:
 - The texture was modified to be gray (instead of orange) to be better recolorable in-game + some recoloring was done.

@@ -37,6 +37,12 @@ ENT.PedalCenterOffset = 0
 ENT.FootBallHeight = 1
 -- Where the hands hold relative to the grip attachments: forward, outward (mirrored for each side) and up.
 ENT.GripOffset = Vector(0, 0, 0)
+-- The attachment a passenger seat is put at. Without one the bike has no passenger seat.
+ENT.PassengerAttachment = nil
+-- Where the passenger sits relative to the passenger attachment.
+ENT.PassengerSeatOffset = Vector(0, 0, 0)
+-- Bodygroups set on spawn, as { [bodygroup name] = submodel index }.
+ENT.BodyGroups = nil
 -- Prisoner pods face their own +Y.
 ENT.SeatAngles = Angle(0, -90, 0)
 -- The rider's eye angles, which are relative to the seat, that look straight along the bike.
@@ -68,6 +74,8 @@ local STEP_PROBE_DEPTH = 2
 function ENT:SetupDataTables()
   self:NetworkVar("Entity", "Seat")
   self:NetworkVar("Entity", "Rider")
+  -- Whoever sits in the passenger seat, on bikes that have one.
+  self:NetworkVar("Entity", "Passenger")
   -- Handlebar angle in degrees, positive is right.
   self:NetworkVar("Float", "Steer")
   -- Crank rpm, purely visual.
@@ -124,6 +132,20 @@ function ENT:GetSeatLocalAngles()
   return angles
 end
 
+--- The passenger attachment plus the model's passenger seat offset.
+--- @return Vector? # Entity-local, nil when the model has no passenger seat
+function ENT:GetPassengerSeatOffset()
+  if (not self.PassengerAttachment) then
+    return nil
+  end
+
+  -- Read once, as the attachment follows the posed bones on the client.
+  self.passengerSeatPosition = self.passengerSeatPosition
+      or self:GetAttachmentLocalPosition(self.PassengerAttachment)
+
+  return self.passengerSeatPosition and self.passengerSeatPosition + self.PassengerSeatOffset
+end
+
 --- @return number # Degrees, positive is leaning right
 function ENT:GetLean()
   -- Leaning right dips the bike's right side below the horizon.
@@ -135,6 +157,7 @@ function ENT:GetForwardSpeed()
   return self:GetVelocity():Dot(self:GetForward())
 end
 
+--- @return Entity[] # The bike, its seats and whoever sits in them
 function ENT:GetWheelTraceFilter()
   local filter = { self }
   local seat, rider = self:GetSeat(), self:GetRider()
@@ -145,6 +168,16 @@ function ENT:GetWheelTraceFilter()
 
   if (IsValid(rider)) then
     filter[#filter + 1] = rider
+  end
+
+  local passengerSeat, passenger = self.passengerSeat, self:GetPassenger()
+
+  if (IsValid(passengerSeat)) then
+    filter[#filter + 1] = passengerSeat
+  end
+
+  if (IsValid(passenger)) then
+    filter[#filter + 1] = passenger
   end
 
   return filter

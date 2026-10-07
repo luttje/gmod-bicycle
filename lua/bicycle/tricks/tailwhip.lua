@@ -48,10 +48,16 @@ if (CLIENT) then
     return whippedBones
   end
 
-  --- Leaves the fork and handlebar where the rider holds them. Spinning counter-clockwise seen from above swings the
-  --- rear wheel out to the right.
+  --- Spinning counter-clockwise seen from above swings the rear wheel out to the right.
+  function TRICK:GetFrameRotation(bike, angle, frame)
+    return frame.steeringPivot, frame.steeringAxis, angle
+  end
+
+  --- Leaves the fork and handlebar where the rider holds them.
   function TRICK:PoseBike(bike, angle, frame)
-    bicycle.ik.rotateAround(bike, getWhippedBones(bike), frame.steeringPivot, frame.steeringAxis, angle)
+    local pivot, axis, degrees = self:GetFrameRotation(bike, angle, frame)
+
+    bicycle.ik.rotateAround(bike, getWhippedBones(bike), pivot, axis, degrees)
   end
 
   function TRICK:AdjustFootTarget(bike, leg, target, angle, frame)

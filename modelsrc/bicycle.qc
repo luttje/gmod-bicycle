@@ -24,6 +24,13 @@ $attachment "grip_L"  "att_grip_L" 0 0 0
 $attachment "grip_R"  "att_grip_R" 0 0 0
 $attachment "pedal_L" "pedal_L"    0 0 0
 $attachment "pedal_R" "pedal_R"    0 0 0
+$attachment "baby_seat" "att_baby_seat" 0 0 0
+
+$bodygroup "baby_seat"
+{
+	blank
+	studio "bodygroup_baby_seat"
+}
 
 // Four convex pieces: frame box, handlebar box and two wheel discs. The code shrinks the discs into bump stops, the
 // tyres are simulated by traces.

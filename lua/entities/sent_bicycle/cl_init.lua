@@ -509,6 +509,75 @@ function ENT:UpdateRiderPose()
   end)
 end
 
+--- Turns the whole passenger along with the frame while a trick turns it, such as a tailwhip. Runs inside the
+--- passenger's "BuildBonePositions".
+function ENT:CarryPassenger(passenger)
+  if (not self:IsDoingTrick()) then
+    return
+  end
+
+  local frame = self:GetTrickFrame()
+
+  if (not frame.steeringPivot) then
+    return
+  end
+
+  local bones
+
+  for _, trick in ipairs(bicycle.trick.getAll()) do
+    local angle = self.trickAngles[trick.id]
+    local pivot, axis, degrees
+
+    if (angle) then
+      pivot, axis, degrees = trick:GetFrameRotation(self, angle, frame)
+    end
+
+    if (pivot) then
+      if (not bones) then
+        bones = {}
+
+        for bone = 0, passenger:GetBoneCount() - 1 do
+          bones[#bones + 1] = bone
+        end
+      end
+
+      bicycle.ik.rotateAround(passenger, bones, pivot, axis, degrees)
+    end
+  end
+end
+
+function ENT:StopPosingPassenger()
+  if (IsValid(self.posedPassenger) and self.passengerPoseCallback) then
+    self.posedPassenger:RemoveCallback("BuildBonePositions", self.passengerPoseCallback)
+  end
+
+  self.posedPassenger = nil
+  self.passengerPoseCallback = nil
+end
+
+--- Hooks the passenger's bone setup whenever someone else gets on.
+function ENT:UpdatePassengerPose()
+  local passenger = self:GetPassenger()
+
+  if (self.posedPassenger == passenger) then
+    return
+  end
+
+  self:StopPosingPassenger()
+
+  if (not IsValid(passenger)) then
+    return
+  end
+
+  self.posedPassenger = passenger
+  self.passengerPoseCallback = passenger:AddCallback("BuildBonePositions", function(player)
+    -- A dormant bike's Think doesn't run, so it can't unhook itself and its passenger may be stale.
+    if (IsValid(self) and not self:IsDormant()) then
+      self:CarryPassenger(player)
+    end
+  end)
+end
+
 function ENT:IsWithinDebugDistance()
   return self:GetPos():DistToSqr(EyePos()) < DEBUG_DISTANCE * DEBUG_DISTANCE
 end
@@ -681,6 +750,7 @@ function ENT:Think()
 
   self:UpdateBones()
   self:UpdateRiderPose()
+  self:UpdatePassengerPose()
   self:UpdateDebugWheelContacts()
   self:UpdateSoundLoops(deltaTime)
 
@@ -694,6 +764,7 @@ function ENT:OnRemove()
   end
 
   self:StopPosingRider()
+  self:StopPosingPassenger()
   self:StopSoundLoops()
 end
 
@@ -791,6 +862,13 @@ function ENT:DrawEditorOverlay()
 
   render.DrawWireframeSphere(seatPosition, EDITOR_MARKER_RADIUS, 8, 8, colors.editorSeat, false)
   render.DrawLine(seatPosition, seatPosition + seatUp * EDITOR_SPINE_LENGTH, colors.editorSeat, false)
+
+  local passengerSeatOffset = self:GetPassengerSeatOffset()
+
+  if (passengerSeatOffset) then
+    render.DrawWireframeSphere(self:LocalToWorld(passengerSeatOffset), EDITOR_MARKER_RADIUS, 8, 8,
+      colors.editorPassenger, false)
+  end
 
   for _, arm in ipairs(RIDER_ARMS) do
     local target = self:GetGripTarget(arm, forward, left, up)

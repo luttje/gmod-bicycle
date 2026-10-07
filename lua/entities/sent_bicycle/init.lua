@@ -7,6 +7,9 @@ include("sv_tricks.lua")
 
 local SPAWN_HEIGHT = 24
 
+local RIDER_SEAT_MODEL = "models/nova/airboat_seat.mdl"
+local PASSENGER_SEAT_MODEL = "models/nova/jeep_seat.mdl"
+
 -- Random spawn colors pick any hue, but stay saturated and bright enough to not look muddy.
 local RANDOM_COLOR_SATURATION = 0.7
 local RANDOM_COLOR_VALUE = 0.9
@@ -132,7 +135,25 @@ function ENT:Initialize()
   self.isAirTurning = false
 
   self:StartMotionController()
+  self:ApplyBodyGroups()
   self:CreateSeat()
+  self:CreatePassengerSeat()
+end
+
+function ENT:ApplyBodyGroups()
+  if (not self.BodyGroups) then
+    return
+  end
+
+  for name, submodel in pairs(self.BodyGroups) do
+    local index = self:FindBodygroupByName(name)
+
+    if (index >= 0) then
+      self:SetBodygroup(index, submodel)
+    else
+      ErrorNoHalt(string.format("[bicycle] %s has no bodygroup named %q.\n", self:GetModel(), name))
+    end
+  end
 end
 
 --- @return Vector? # Entity-local, nil when the model has no such bone
@@ -266,22 +287,28 @@ function ENT:BuildPhysics()
   self:EnableCustomCollisions(true)
 end
 
-function ENT:CreateSeat()
+--- Creates an invisible seat parented to the bike. It has no collisions and no motion of its own, so it weighs nothing
+--- and costs the bike's physics nothing.
+--- @param model string
+--- @param localPosition Vector
+--- @param localAngles Angle
+--- @return Entity?
+local function createSeat(bike, model, localPosition, localAngles)
   local seat = ents.Create("prop_vehicle_prisoner_pod")
 
   if (not IsValid(seat)) then
-    return
+    return nil
   end
 
-  seat:SetModel("models/nova/airboat_seat.mdl")
+  seat:SetModel(model)
   seat:SetKeyValue("vehiclescript", "scripts/vehicles/prisoner_pod.txt")
   seat:SetKeyValue("limitview", "0")
-  seat:SetPos(self:LocalToWorld(self:GetSeatOffset()))
-  seat:SetAngles(self:LocalToWorldAngles(self:GetSeatLocalAngles()))
+  seat:SetPos(bike:LocalToWorld(localPosition))
+  seat:SetAngles(bike:LocalToWorldAngles(localAngles))
   seat:Spawn()
   seat:Activate()
   seat:SetMoveType(MOVETYPE_NONE)
-  seat:SetParent(self)
+  seat:SetParent(bike)
   seat:SetNotSolid(true)
   seat:SetNoDraw(true)
   seat:DrawShadow(false)
@@ -295,10 +322,68 @@ function ENT:CreateSeat()
 
   seat.PhysgunDisabled = true
   seat.DoNotDuplicate = true
-  seat:SetNW2Bool("bicycle_Seat", true)
 
-  self:DeleteOnRemove(seat)
+  bike:DeleteOnRemove(seat)
+
+  return seat
+end
+
+function ENT:CreateSeat()
+  local seat = createSeat(self, RIDER_SEAT_MODEL, self:GetSeatOffset(), self:GetSeatLocalAngles())
+
+  if (not IsValid(seat)) then
+    return
+  end
+
+  seat:SetNW2Bool("bicycle_Seat", true)
   self:SetSeat(seat)
+end
+
+--- Only for models with a passenger attachment. The passenger just sits there: they don't ride, pose or add weight.
+function ENT:CreatePassengerSeat()
+  if (not self.PassengerAttachment) then
+    return
+  end
+
+  local offset = self:GetPassengerSeatOffset()
+
+  if (not offset) then
+    ErrorNoHalt(string.format(
+      "[bicycle] %s has no %q attachment for the passenger seat.\n",
+      self:GetModel(),
+      self.PassengerAttachment
+    ))
+    return
+  end
+
+  local seat = createSeat(self, PASSENGER_SEAT_MODEL, offset, self.SeatAngles)
+
+  if (not IsValid(seat)) then
+    return
+  end
+
+  seat:SetNW2Bool("bicycle_PassengerSeat", true)
+  self.passengerSeat = seat
+end
+
+--- Whether `player` using the bike takes the passenger seat: when someone already rides it, or else when they aim
+--- closer to the passenger seat than to the saddle.
+--- @param player Player
+--- @return boolean
+function ENT:IsChoosingPassengerSeat(player)
+  local seat = self.passengerSeat
+
+  if (not IsValid(seat) or IsValid(seat:GetDriver())) then
+    return false
+  end
+
+  if (IsValid(self:GetRider())) then
+    return true
+  end
+
+  local aimPosition = player:GetEyeTrace().HitPos
+
+  return aimPosition:DistToSqr(seat:GetPos()) < aimPosition:DistToSqr(self:LocalToWorld(self:GetSeatOffset()))
 end
 
 function ENT:Use(activator)
@@ -307,7 +392,24 @@ function ENT:Use(activator)
   end
 
   -- Getting on a bike someone holds with the physgun would let them fling the rider around.
-  if (IsValid(self:GetRider()) or self.isPhysgunHeld or (activator._BicycleNextUseAt or 0) > CurTime()) then
+  if (self.isPhysgunHeld or (activator._BicycleNextUseAt or 0) > CurTime()) then
+    return
+  end
+
+  if (self.PassengerAttachment and not IsValid(self.passengerSeat)) then
+    self:CreatePassengerSeat()
+  end
+
+  if (self:IsChoosingPassengerSeat(activator)) then
+    -- The third argument tells gamemodes the player gets on as the passenger.
+    if (hook.Run("BicycleCanMount", activator, self, true) ~= false) then
+      activator:EnterVehicle(self.passengerSeat)
+    end
+
+    return
+  end
+
+  if (IsValid(self:GetRider())) then
     return
   end
 
@@ -393,6 +495,8 @@ function ENT:OnModelSettingChanged(key)
   elseif (SEAT_POSE_KEYS[key] and IsValid(self:GetSeat())) then
     self:GetSeat():SetLocalPos(self:GetSeatOffset())
     self:GetSeat():SetLocalAngles(self:GetSeatLocalAngles())
+  elseif (key == "passengerSeatOffset" and IsValid(self.passengerSeat)) then
+    self.passengerSeat:SetLocalPos(self:GetPassengerSeatOffset())
   end
 end
 
@@ -411,6 +515,14 @@ function ENT:OnRiderEnter(player)
   hook.Run("BicycleRiderMounted", player, self)
 end
 
+function ENT:OnPassengerEnter(player)
+  self:SetPassenger(player)
+  player._BicycleNextUseAt = CurTime() + USE_COOLDOWN_AFTER_ENTERING
+  player:SetEyeAngles(self.SeatForwardEyeAngles)
+
+  hook.Run("BicyclePassengerMounted", player, self)
+end
+
 --- Finds the first offset where the player fits and which can be reached from the bike without passing through a wall.
 --- @param player Player
 --- @param offsets table[] Relative to the bike's heading, see `DISMOUNT_OFFSETS`
@@ -419,7 +531,8 @@ function ENT:FindDismountPosition(player, offsets)
   local mins, maxs = player:GetHull()
   local origin = self:GetPos()
   local forward, right = self:GetForward(), self:GetRight()
-  local filter = { self, self:GetSeat(), player }
+  local filter = self:GetWheelTraceFilter()
+  filter[#filter + 1] = player
 
   forward.z, right.z = 0, 0
   forward:Normalize()
@@ -463,12 +576,15 @@ end
 function ENT:FindFallbackDismountPosition(player)
   local mins, maxs = player:GetHull()
   local origin = self:GetPos()
+  local filter = self:GetWheelTraceFilter()
+  filter[#filter + 1] = player
+
   local trace = util.TraceHull({
     start = origin,
     endpos = origin + vector_up * FALLBACK_DISMOUNT_HEIGHT,
     mins = mins,
     maxs = maxs,
-    filter = { self, self:GetSeat(), player },
+    filter = filter,
     mask = MASK_PLAYERSOLID,
   })
 
@@ -551,6 +667,30 @@ local function tryRagmodRagdoll(player, ejectVelocity)
   return true
 end
 
+--- The engine may still move a player after the leave hooks, so their dismount position is enforced again next tick.
+--- @param player Player
+--- @param position Vector
+--- @param bikePosition Vector
+--- @param onHeld? function Called once the position is enforced again
+local function holdDismountPosition(player, position, bikePosition, onHeld)
+  timer.Simple(0, function()
+    if (not IsValid(player) or player:InVehicle() or not player:Alive()) then
+      return
+    end
+
+    -- Moved far away by something else, such as an admin teleport or a jail.
+    if (player:GetPos():DistToSqr(bikePosition) > MAX_DISMOUNT_CORRECTION_DISTANCE * MAX_DISMOUNT_CORRECTION_DISTANCE) then
+      return
+    end
+
+    player:SetPos(position)
+
+    if (onHeld) then
+      onHeld()
+    end
+  end)
+end
+
 function ENT:OnRiderLeave(player)
   if (self:GetRider() ~= player) then
     return
@@ -581,32 +721,34 @@ function ENT:OnRiderLeave(player)
 
   hook.Run("BicycleRiderDismounted", player, self, isCrashing == true)
 
-  local bikePosition = self:GetPos()
+  holdDismountPosition(player, position, self:GetPos(), isCrashing and function()
+    local ejectVelocity = velocity * CRASH_EJECT_VELOCITY_SCALE + vector_up * CRASH_EJECT_UPWARD_SPEED
 
-  -- The engine may still move the player after this hook, so the position is enforced again next tick.
-  timer.Simple(0, function()
-    if (not IsValid(player) or player:InVehicle() or not player:Alive()) then
-      return
-    end
-
-    -- Moved far away by something else, such as an admin teleport or a jail.
-    if (player:GetPos():DistToSqr(bikePosition) > MAX_DISMOUNT_CORRECTION_DISTANCE * MAX_DISMOUNT_CORRECTION_DISTANCE) then
-      return
-    end
-
-    player:SetPos(position)
-
-    if (isCrashing) then
-      local ejectVelocity = velocity * CRASH_EJECT_VELOCITY_SCALE + vector_up * CRASH_EJECT_UPWARD_SPEED
-
-      -- Lets gamemodes react to the rider flying over the handlebars, such as by knocking them out. Returning false
-      -- keeps the rider from being thrown, so the gamemode can handle that itself.
-      if (hook.Run("BicycleRiderCrashed", player, self, ejectVelocity) ~= false
-            and not tryRagmodRagdoll(player, ejectVelocity)) then
-        player:SetVelocity(ejectVelocity)
-      end
+    -- Lets gamemodes react to the rider flying over the handlebars, such as by knocking them out. Returning false
+    -- keeps the rider from being thrown, so the gamemode can handle that itself.
+    if (hook.Run("BicycleRiderCrashed", player, self, ejectVelocity) ~= false
+          and not tryRagmodRagdoll(player, ejectVelocity)) then
+      player:SetVelocity(ejectVelocity)
     end
   end)
+end
+
+--- The passenger gets off where a rider would, wherever the bike is, as the seat's own exit points could be in a wall.
+function ENT:OnPassengerLeave(player)
+  if (self:GetPassenger() == player) then
+    self:SetPassenger(NULL)
+  end
+
+  player._BicycleNextUseAt = CurTime() + USE_COOLDOWN_AFTER_LEAVING
+
+  local position = self:FindDismountPosition(player, DISMOUNT_OFFSETS) or self:FindFallbackDismountPosition(player)
+
+  player:SetPos(position)
+  player:SetEyeAngles(Angle(0, self:GetAngles().y, 0))
+
+  hook.Run("BicyclePassengerDismounted", player, self)
+
+  holdDismountPosition(player, position, self:GetPos())
 end
 
 --- @param isIntoWater? boolean Whether the rider rode into water too deep to ride through
@@ -633,6 +775,12 @@ function ENT:Crash(isIntoWater)
   if (IsValid(rider)) then
     self.isEjectingFromCrash = true
     rider:ExitVehicle()
+  end
+
+  local passenger = self:GetPassenger()
+
+  if (IsValid(passenger)) then
+    passenger:ExitVehicle()
   end
 end
 
@@ -747,6 +895,15 @@ function ENT:ValidateRider()
   end
 end
 
+--- Catches passengers that left without PlayerLeaveVehicle, such as by dying.
+function ENT:ValidatePassenger()
+  local passenger = self:GetPassenger()
+
+  if (IsValid(passenger) and (passenger:GetVehicle() ~= self.passengerSeat or not passenger:Alive())) then
+    self:SetPassenger(NULL)
+  end
+end
+
 local function approachPoseFraction(fraction, isActive)
   local target = isActive and 1 or 0
   fraction = Lerp(1 - math.exp(-SEAT_POSE_RESPONSE * FrameTime()), fraction, target)
@@ -797,6 +954,7 @@ function ENT:Think()
   self:HandleLandedTricks()
   self:HandlePendingSounds()
   self:ValidateRider()
+  self:ValidatePassenger()
   self:UpdateSeatPose()
 
   self:NextThink(CurTime())
@@ -808,5 +966,11 @@ function ENT:OnRemove()
 
   if (IsValid(rider) and rider:InVehicle()) then
     rider:ExitVehicle()
+  end
+
+  local passenger = self:GetPassenger()
+
+  if (IsValid(passenger)) then
+    passenger:ExitVehicle()
   end
 end

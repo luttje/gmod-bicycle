@@ -67,6 +67,18 @@ function bicycle.isSeat(vehicle)
   return IsValid(vehicle) and vehicle:GetNW2Bool("bicycle_Seat", false)
 end
 
+--- @param vehicle Entity
+--- @return Entity?
+local function getParentBicycle(vehicle)
+  local bike = vehicle:GetParent()
+
+  if (IsValid(bike) and bike.IsBicycle) then
+    return bike
+  end
+
+  return nil
+end
+
 --- Resolves a bicycle seat to the bicycle it is mounted on.
 --- @param vehicle Entity?
 --- @return Entity?
@@ -75,11 +87,16 @@ function bicycle.getFromSeat(vehicle)
     return nil
   end
 
-  local bike = vehicle:GetParent()
+  return getParentBicycle(vehicle)
+end
 
-  if (IsValid(bike) and bike.IsBicycle) then
-    return bike
+--- Resolves a bicycle's passenger seat to the bicycle it is mounted on.
+--- @param vehicle Entity?
+--- @return Entity?
+function bicycle.getFromPassengerSeat(vehicle)
+  if (not IsValid(vehicle) or not vehicle:GetNW2Bool("bicycle_PassengerSeat", false)) then
+    return nil
   end
 
-  return nil
+  return getParentBicycle(vehicle)
 end
