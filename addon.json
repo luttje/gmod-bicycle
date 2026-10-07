@@ -16,6 +16,7 @@
     "modelsrc/*",
     "mapsrc/*",
     "tools/*",
+    "spawnmenu.png",
     "*.gma"
   ]
 }

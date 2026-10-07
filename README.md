@@ -16,6 +16,7 @@ start Garry's Mod.
 ## Getting started
 1. Open the spawn menu (**Q**), go to **Entities → Rides** and spawn the **Mountain Bike**. Every
    bike spawns in a random color, and you can repaint it with the Color tool.
+   ![Screenshot of the spawn menu showing the Entities tab and 'Rides' category](spawnmenu.png)
 2. Walk up to it and press **E** to get on.
 3. Hold **W** to pedal and use **A** / **D** to steer.
 
