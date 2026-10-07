@@ -2,6 +2,8 @@ local TRICK = {}
 
 TRICK.id = "no_footer"
 TRICK.name = "No-footer"
+TRICK.keys = "[+duck] + [+back]"
+TRICK.description = "Kicks both feet off the pedals. Lasts as long as you hold it."
 TRICK.contact = { none = true }
 
 local POSE_SPEED = 700

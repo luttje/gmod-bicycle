@@ -2,6 +2,8 @@ local TRICK = {}
 
 TRICK.id = "no_hander"
 TRICK.name = "No-hander"
+TRICK.keys = "[+duck] + [+forward]"
+TRICK.description = "Lets go of the bars and spreads your arms. Lasts as long as you hold it."
 TRICK.contact = { none = true }
 
 local POSE_SPEED = 700

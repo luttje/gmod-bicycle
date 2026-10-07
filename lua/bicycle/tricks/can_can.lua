@@ -2,6 +2,8 @@ local TRICK = {}
 
 TRICK.id = "can_can"
 TRICK.name = "Can-can"
+TRICK.keys = "[+duck] + [+moveleft] / [+moveright]"
+TRICK.description = "Swings your left or right leg over the top tube. Lasts as long as you hold it."
 TRICK.contact = { none = true }
 
 local POSE_SPEED = 700

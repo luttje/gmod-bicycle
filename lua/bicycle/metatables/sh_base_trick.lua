@@ -10,6 +10,13 @@ BASE_TRICK.name = nil
 --- Which wheels may touch the ground while the trick is done.
 BASE_TRICK.contact = { none = true, front = nil, rear = nil, both = nil }
 
+--- Shown in the guide binder: the keys that do the trick. Bracketed text is drawn as a key, and a bracketed bind is
+--- drawn as whichever key the player has bound to it, such as "[+duck] + [+forward]" for Ctrl + W.
+BASE_TRICK.keys = nil
+
+--- Shown in the guide binder: what the trick does. Where it can be done is taken from `contact`.
+BASE_TRICK.description = nil
+
 --- Whether the trick turns the real bike over, which skips the crash check and holds the camera still.
 BASE_TRICK.rotatesBike = false
 

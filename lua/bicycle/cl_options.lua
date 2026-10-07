@@ -54,6 +54,7 @@ end
 
 local function buildClientPanel(form)
   form:Help("Your own camera, rider and debug settings. They are saved between sessions.")
+  form:Button("Open the bike guide", "bicycle_guide")
   form:Button("Reset to defaults", "bicycle_reset_client")
   addSections(form, bicycle.clientSettingSections)
 

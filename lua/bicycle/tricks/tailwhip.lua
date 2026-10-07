@@ -2,6 +2,8 @@ local TRICK = {}
 
 TRICK.id = "tailwhip"
 TRICK.name = "Tailwhip"
+TRICK.keys = "[+attack] + [+moveleft] / [+moveright]"
+TRICK.description = "Kicks the frame round the handlebar. Keep holding for more turns."
 TRICK.contact = { none = true }
 
 -- How far the feet kick clear of the frame (forward, outward mirrored for each side, up), fully by the time the frame

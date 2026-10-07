@@ -2,6 +2,8 @@ local TRICK = {}
 
 TRICK.id = "frontflip"
 TRICK.name = "Front flip"
+TRICK.keys = "Double-tap [+forward]"
+TRICK.description = "Turns the whole bike over forwards. Keep holding the second press for more flips."
 TRICK.contact = { none = true }
 TRICK.rotatesBike = true
 

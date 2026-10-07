@@ -2,6 +2,8 @@ local TRICK = {}
 
 TRICK.id = "x_up"
 TRICK.name = "X-up"
+TRICK.keys = "[+attack2] + [+forward]"
+TRICK.description = "Turns the bars half way round, crossing your arms. Lasts as long as you hold it."
 TRICK.contact = { none = true, rear = true }
 -- Right mouse + W is also pedalling in a wheelie.
 TRICK.needsFreshInput = true

@@ -22,6 +22,10 @@ start Garry's Mod.
 
 Knocked the bike over? Press **E** on it and it stands back up when you get on.
 
+> [!TIP]
+> Spawn the **Bike Guide** binder from the same category and press **E** on it for a guide to riding and every trick.
+> Run `bicycle_guide` in the console to open the guide anywhere.
+
 ## Bicycle Controls
 
 ### Riding

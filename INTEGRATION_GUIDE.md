@@ -1,7 +1,7 @@
 # Integrating with Gmod Bicycle
 
-This guide is for addon and gamemode developers. It covers adding your own bikes and tricks, and the hooks that
-let your code react to bikes. For riding, settings and installing, see the [README](README.md).
+This guide is for addon and gamemode developers. It covers adding your own bikes, tricks and guide chapters, and the
+hooks that let your code react to bikes. For riding, settings and installing, see the [README](README.md).
 
 ## Adding your own bikes
 Other addons can add their own bike models. Each one gets its own entry in the spawn menu. Register it from a shared
@@ -37,6 +37,9 @@ local TRICK = {}
 
 TRICK.id = "myaddon_tabletop"
 TRICK.name = "Tabletop"
+-- Shown in the bike guide. Bracketed binds are drawn as the key the player has bound to them
+TRICK.keys = "[+duck] + [+forward]"
+TRICK.description = "Lays the bike flat beneath you. Lasts as long as you hold it."
 -- Which wheels may touch the ground during the trick: "none", "rear", "front" and/or "both"
 TRICK.contact = { none = true }
 
@@ -67,6 +70,38 @@ complete examples, such as the [tailwhip](lua/bicycle/tricks/tailwhip.lua), the 
 and the [no-hander](lua/bicycle/tricks/no_hander.lua).
 
 To give tricks more controls, add fields to the rider's input with the [`BicycleReadInput`](#tricks) hook.
+
+Every registered trick gets its own card in the **Tricks** chapter of the bike guide, showing its `name`, `keys` and
+`description`. The card says where the trick can be done, such as in the air or in a wheelie, based on its `contact`.
+
+## Adding your own guide chapters
+Using the **Bike Guide** binder (or running `bicycle_guide`) opens a window of chapters on riding. Each chapter is a
+`cl_` file in `lua/bicycle/guide/`, and the addon loads every file in that folder on the client, so another addon can
+add a chapter by putting a file there too:
+
+```lua
+-- lua/bicycle/guide/cl_myaddon_grinds.lua
+bicycle.guide.registerChapter({
+  id = "myaddon_grinds",
+  title = "Grinds",
+  -- Chapters are sorted by this. The built-in ones are 10, 20, 30, 40 and 50
+  order = 45,
+  -- A list of blocks, or a function returning one that runs each time the chapter is shown
+  content = {
+    "A plain string is a paragraph of text.",
+    { type = "heading", text = "Rails" },
+    { type = "controls", rows = { { "[+use]", "Grind the rail you're on" } } },
+    { type = "tip", text = "Grinds combine with tricks." },
+    { type = "card", title = "Feeble", tag = "on a rail", keys = "[+duck]", text = "Hangs the front wheel over." },
+  },
+})
+```
+
+Text in brackets in `keys` is drawn as a keycap. A bracketed bind such as `[+forward]` is drawn as whichever key the
+player has bound to it. To add a block type of your own, call `bicycle.guide.registerBlockType(name, build)`, where
+`build(parent, block)` adds the block's panels to `parent`, docked to the top. The built-in block types are in
+[`lua/bicycle/cl_guide.lua`](lua/bicycle/cl_guide.lua), and the built-in chapters in
+[`lua/bicycle/guide/`](lua/bicycle/guide/).
 
 ## Hooks
 These hooks let gamemodes and other addons react to bikes. They run on the server, except for the HUD one.

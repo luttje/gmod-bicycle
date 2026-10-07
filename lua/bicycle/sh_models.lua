@@ -11,8 +11,6 @@
 --     })
 --   end)
 
-local DEFAULT_CATEGORY = "Rides"
-
 -- Definition keys that are copied as-is onto the entity class. Left out keys fall back to sent_bicycle's defaults.
 local DEFINITION_FIELDS = {
   model = "Model",
@@ -113,7 +111,7 @@ function bicycle.registerModel(id, definition)
     Type = "anim",
     Base = bicycle.ENTITY_CLASS,
     PrintName = definition.name or id,
-    Category = definition.category or DEFAULT_CATEGORY,
+    Category = definition.category or bicycle.SPAWN_CATEGORY,
     Spawnable = true,
     BicycleModelId = id,
   }

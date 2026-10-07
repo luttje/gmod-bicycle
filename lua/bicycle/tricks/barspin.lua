@@ -2,6 +2,8 @@ local TRICK = {}
 
 TRICK.id = "barspin"
 TRICK.name = "Barspin"
+TRICK.keys = "[+attack2] + [+moveleft] / [+moveright]"
+TRICK.description = "Spins the handlebar round. Keep holding for more turns."
 TRICK.contact = { none = true, rear = true }
 
 -- How far the hands lift off the grips, fully by the time the bars are this far round (deg).

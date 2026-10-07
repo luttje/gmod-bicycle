@@ -7,6 +7,7 @@ end
 bicycle = bicycle or {}
 
 bicycle.ENTITY_CLASS = "sent_bicycle"
+bicycle.SPAWN_CATEGORY = "Rides"
 
 --- Includes a file from lua/bicycle/, sending it to clients and/or running it depending on its cl_, sh_ or sv_ prefix.
 --- @param fileName string
@@ -52,6 +53,11 @@ bicycle.includePrefixed("cl_options.lua")
 bicycle.includePrefixed("cl_ik.lua")
 bicycle.includePrefixed("cl_hooks.lua")
 bicycle.includePrefixed("cl_editor.lua")
+bicycle.includePrefixed("cl_guide.lua")
+
+for _, fileName in ipairs((file.Find("bicycle/guide/*.lua", "LUA"))) do
+  bicycle.includePrefixed(fileName, "guide/")
+end
 
 --- How many degrees `direction` points above the horizon, negative when below it.
 --- @param direction Vector Normalized
