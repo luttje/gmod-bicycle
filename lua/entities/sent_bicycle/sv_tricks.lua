@@ -223,13 +223,27 @@ function ENT:HandleLandedTricks()
 
   self:EmitBicycleSound("bicycle/frame_creak.wav", 70, math.random(110, 120))
 
+  local tricks = {}
+
   for id, turns in pairs(landedTricks) do
     local trick = bicycle.trick.get(id)
 
     if (trick) then
       trick:OnLanded(self, rider, turns)
+      tricks[#tricks + 1] = { trick = trick, turns = turns }
     end
   end
+
+  -- Shown on the rider's HUD.
+  net.Start("bicycle.TricksLanded")
+  net.WriteUInt(#tricks, 8)
+
+  for _, landed in ipairs(tricks) do
+    bicycle.trick.write(landed.trick)
+    net.WriteUInt(math.min(landed.turns, 255), 8)
+  end
+
+  net.Send(rider)
 
   -- Lets gamemodes score tricks. `landedTricks` holds the whole turns of each trick landed cleanly, by trick id (such
   -- as `{ tailwhip = 2, barspin = 1 }`). Tricks without a whole turn are left out.

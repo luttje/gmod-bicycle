@@ -26,6 +26,7 @@ local TRICK_META = FindMetaTable("bicycle.trick")
 
 if (SERVER) then
   util.AddNetworkString("bicycle.TrickStates")
+  util.AddNetworkString("bicycle.TricksLanded")
 end
 
 --- @type table[] In the order they were registered

@@ -64,9 +64,9 @@ if (CLIENT) then
       return
     end
 
-    local colors, fonts = bicycle.guide.COLORS, bicycle.guide.FONTS
-    local hintTokens = bicycle.guide.parseKeys(LABEL_HINT)
-    local hintWidth = bicycle.guide.getKeysWidth(hintTokens)
+    local colors, fonts = bicycle.draw.COLORS, bicycle.draw.FONTS
+    local hintTokens = bicycle.draw.parseKeys(LABEL_HINT)
+    local hintWidth = bicycle.draw.getKeysWidth(hintTokens)
 
     position.z = position.z + LABEL_HEIGHT
 
@@ -75,7 +75,7 @@ if (CLIENT) then
 
     draw.SimpleText(LABEL_TITLE, fonts.chapter, 3, 3, colors.accent, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
     draw.SimpleText(LABEL_TITLE, fonts.chapter, 0, 0, colors.text, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
-    bicycle.guide.drawKeys(hintTokens, -hintWidth * 0.5, LABEL_SPACING, colors.text)
+    bicycle.draw.keys(hintTokens, -hintWidth * 0.5, LABEL_SPACING, colors.text)
 
     surface.SetAlphaMultiplier(1)
     cam.End3D2D()

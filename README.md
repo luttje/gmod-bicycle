@@ -88,8 +88,8 @@ Knocked the bike over? Press **E** on it and it stands back up when you get on.
 ## Settings
 Open the spawn menu and go to **Options → Bicycle**. Changes apply straight away, so you can tweak things while riding.
 
-- **Client** is just for you: first or third person, camera distance and height, camera roll, speedometer units (km/h, mph or off), how
-  your character sits on the bike and the volume of the riding sounds and wind. These are saved.
+- **Client** is just for you: first or third person, camera distance and height, camera roll, speedometer units (km/h, mph or off),
+  showing the tricks you land, how your character sits on the bike and the volume of the riding sounds and wind. These are saved.
 - **Server** changes how every bike on the server rides: top speed, acceleration, steering, grip, suspension and more.
   The server saves these. In singleplayer and on a server you host from the menu, you change them right there.
   On a dedicated server, the menu only shows them: set the `bicycle_*` ConVars from the server console, rcon or

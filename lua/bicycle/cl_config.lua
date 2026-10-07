@@ -136,6 +136,13 @@ bicycle.clientSettingSections = {
         choices = { "km/h", "mph", "units", "off" },
         description = "Unit the speedometer shows while riding, or off to hide it",
       },
+      {
+        name = "hud_tricks",
+        label = "Show landed tricks",
+        type = "bool",
+        default = 1,
+        description = "Show the names of the tricks you land",
+      },
     },
   },
   {

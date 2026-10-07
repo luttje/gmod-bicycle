@@ -7,7 +7,8 @@ bicycle.guide.registerChapter({
     .. "riding.",
     { type = "heading", text = "Client" },
     "Just for you, and saved between sessions: first or third person, camera distance and height, camera roll, "
-    .. "speedometer units, how your character sits on the bike and the volume of the riding sounds and wind.",
+    .. "speedometer units, showing the tricks you land, how your character sits on the bike and the volume of the "
+    .. "riding sounds and wind.",
     { type = "heading", text = "Server" },
     "How every bike on the server rides: top speed, acceleration, steering, grip, suspension and more. In singleplayer "
     .. "and on a server you host from the menu, you change them right there. On a dedicated server, the menu only "

@@ -50,10 +50,12 @@ bicycle.includePrefixed("sv_editor.lua")
 
 bicycle.includePrefixed("cl_config.lua")
 bicycle.includePrefixed("cl_options.lua")
+bicycle.includePrefixed("cl_draw.lua")
 bicycle.includePrefixed("cl_ik.lua")
 bicycle.includePrefixed("cl_hooks.lua")
 bicycle.includePrefixed("cl_editor.lua")
 bicycle.includePrefixed("cl_guide.lua")
+bicycle.includePrefixed("cl_trick_hud.lua")
 
 for _, fileName in ipairs((file.Find("bicycle/guide/*.lua", "LUA"))) do
   bicycle.includePrefixed(fileName, "guide/")

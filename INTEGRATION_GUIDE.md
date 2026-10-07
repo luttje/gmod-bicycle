@@ -254,12 +254,12 @@ end)
 ```
 
 ### HUD
-On the client, the speedometer checks GMod's own `HUDShouldDraw` hook with the name `BicycleSpeedometer`, so a gamemode
-with its own HUD can hide it:
+On the client, the speedometer and the landed tricks check GMod's own `HUDShouldDraw` hook with the names
+`BicycleSpeedometer` and `BicycleTricks`, so a gamemode with its own HUD can hide them:
 
 ```lua
-hook.Add("HUDShouldDraw", "myaddon.hideBicycleSpeedometer", function(name)
-  if (name == "BicycleSpeedometer") then
+hook.Add("HUDShouldDraw", "myaddon.hideBicycleHud", function(name)
+  if (name == "BicycleSpeedometer" or name == "BicycleTricks") then
     return false
   end
 end)
