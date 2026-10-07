@@ -35,6 +35,7 @@ local SNIPPET_KEY_ORDER = {
   "bodygroups",
   "passengerAttachment",
   "passengerSeatOffset",
+  "passengerLegSpread",
 }
 -- Fallbacks for what the server measures from the model on spawn.
 local MEASURED_KEYS = { "wheelRadius", "rearHub", "frontHub", "seatPosition" }

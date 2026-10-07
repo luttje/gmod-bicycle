@@ -52,6 +52,8 @@ local DEFINITION_FIELDS = {
   passengerAttachment = "PassengerAttachment",
   -- Where the passenger sits relative to the passenger attachment.
   passengerSeatOffset = "PassengerSeatOffset",
+  -- Degrees each of the passenger's legs is turned outward at the hip, so they fit around the rider.
+  passengerLegSpread = "PassengerLegSpread",
   -- The measurements below are read from the model on spawn, these are only used until then or if that fails.
   wheelRadius = "WheelRadius",
   seatPosition = "SeatPosition",
@@ -223,6 +225,7 @@ hook.Add("BicycleRegisterModels", "bicycle.defaultModels", function()
     bodygroups = { baby_seat = 1 },
     passengerAttachment = "baby_seat",
     passengerSeatOffset = Vector(-0.35, 0, -5.96),
+    passengerLegSpread = 19,
     -- Measured on models/bicycle/bicycle.mdl.
     wheelRadius = 16.01,
     rearHub = Vector(-22.57, 0, -1.74),

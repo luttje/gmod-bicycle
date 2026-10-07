@@ -111,6 +111,18 @@ bicycle.editor.SETTINGS = {
     end,
   },
   {
+    key = "passengerLegSpread",
+    section = "Passenger",
+    label = "Passenger leg spread",
+    min = 0,
+    max = 80,
+    decimals = 1,
+    help = "How far each of the passenger's legs is turned outward at the hip, so they fit around the rider (deg).",
+    isAvailable = function(bike)
+      return bike.PassengerAttachment ~= nil
+    end,
+  },
+  {
     key = "mass",
     section = "Physics",
     label = "Mass",

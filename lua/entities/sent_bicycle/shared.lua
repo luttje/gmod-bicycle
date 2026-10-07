@@ -41,6 +41,8 @@ ENT.GripOffset = Vector(0, 0, 0)
 ENT.PassengerAttachment = nil
 -- Where the passenger sits relative to the passenger attachment.
 ENT.PassengerSeatOffset = Vector(0, 0, 0)
+-- Degrees each of the passenger's legs is turned outward at the hip, so they fit around the rider.
+ENT.PassengerLegSpread = 0
 -- Bodygroups set on spawn, as { [bodygroup name] = submodel index }.
 ENT.BodyGroups = nil
 -- Prisoner pods face their own +Y.

@@ -1,6 +1,6 @@
 # 🚲 Gmod Bicycle
 
-![Screenshot of Kleiner playermodel on an orange mountainbike](materials/entities/colourable_mountain_bike.png)
+![Screenshot of Kleiner playermodel on the back an orange mountainbike, being ridden by an irresponsible dad](materials/entities/colourable_mountain_bike_baby_seat.png)
 
 A bicycle you can actually ride in Garry's Mod. Pedal, lean into corners, bunny hop over things, pull wheelies and
 crash spectacularly. The wheels spin, the fork steers and your character keeps their hands on the grips and feet on

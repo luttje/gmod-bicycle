@@ -509,6 +509,38 @@ function ENT:UpdateRiderPose()
   end)
 end
 
+--- Turns the passenger's legs outward at the hips, so they fit around the rider. Runs inside the passenger's
+--- "BuildBonePositions".
+function ENT:SpreadPassengerLegs(passenger)
+  local spread = self.PassengerLegSpread
+
+  if (spread == 0) then
+    return
+  end
+
+  local left = -self:GetRight()
+
+  for _, leg in ipairs(RIDER_LEGS) do
+    local thigh = passenger:LookupBone(leg.thigh)
+    local hipPosition = bicycle.ik.getBonePosition(passenger, thigh)
+    local kneePosition = bicycle.ik.getBonePosition(passenger, passenger:LookupBone(leg.calf))
+
+    if (hipPosition and kneePosition) then
+      -- Turning the thigh towards its own side, whichever way it points in the sitting pose.
+      local axis = (kneePosition - hipPosition):Cross(left * leg.side)
+
+      if (axis:LengthSqr() > 1e-6) then
+        axis:Normalize()
+
+        local bones = { thigh }
+        table.Add(bones, bicycle.ik.getDescendants(passenger, thigh))
+
+        bicycle.ik.rotateAround(passenger, bones, hipPosition, axis, spread)
+      end
+    end
+  end
+end
+
 --- Turns the whole passenger along with the frame while a trick turns it, such as a tailwhip. Runs inside the
 --- passenger's "BuildBonePositions".
 function ENT:CarryPassenger(passenger)
@@ -573,6 +605,8 @@ function ENT:UpdatePassengerPose()
   self.passengerPoseCallback = passenger:AddCallback("BuildBonePositions", function(player)
     -- A dormant bike's Think doesn't run, so it can't unhook itself and its passenger may be stale.
     if (IsValid(self) and not self:IsDormant()) then
+      bicycle.ik.beginPass(player)
+      self:SpreadPassengerLegs(player)
       self:CarryPassenger(player)
     end
   end)
