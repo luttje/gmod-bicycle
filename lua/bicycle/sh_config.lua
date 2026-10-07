@@ -1,6 +1,6 @@
--- Tuning is server authoritative and replicated, so every value can be changed live while riding. It isn't archived:
--- every session starts from the defaults below.
-local TUNING_FLAGS = FCVAR_REPLICATED
+-- Tuning is server authoritative and replicated, so every value can be changed live while skating. The server saves
+-- it, so a server's tuning survives restarts.
+local TUNING_FLAGS = { FCVAR_ARCHIVE, FCVAR_REPLICATED }
 
 bicycle.DEFAULT_RIDER_SEQUENCE = "drive_airboat"
 

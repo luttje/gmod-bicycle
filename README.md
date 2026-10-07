@@ -87,11 +87,9 @@ Open the spawn menu and go to **Options → Bicycle**. Changes apply straight aw
 - **Client** is just for you: first or third person, camera distance and height, camera roll, speedometer units (km/h, mph or off), how
   your character sits on the bike and the volume of the riding sounds and wind. These are saved.
 - **Server** changes how every bike on the server rides: top speed, acceleration, steering, grip, suspension and more.
-  Only the host or an admin can change these, and they reset to the defaults every time the server restarts. Admins can
-  also turn all bike sounds off, or just the bell, or give the bell a cooldown under **Sounds**.
-
-> [!TIP]
-> If you modify any server ConVars and want to automatically persist them in `cfg/server.vdf`: run the command `host_writeconfig_lua` in the server console (or add the relevant ConVars to your `cfg/server.cfg` file)
+  The server saves these. In singleplayer and on a server you host from the menu, you change them right there.
+  On a dedicated server, the menu only shows them: set the `bicycle_*` ConVars from the server console, rcon or
+  `cfg/server.cfg` instead.
 
 > [!TIP]
 > Changed too much? Run `bicycle_reset_client` in the console to restore your own settings, or `bicycle_reset_tuning`
