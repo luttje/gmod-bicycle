@@ -308,6 +308,14 @@ bicycle.tuningSections = {
         description = "Frontal impact speed that throws you off (u/s)",
       },
       {
+        name = "land_crash_speed",
+        label = "Landing crash speed",
+        default = 840,
+        min = 0,
+        max = 4000,
+        description = "Landing speed into the ground that throws you off (u/s). 840 u/s ~ a 590 unit drop",
+      },
+      {
         name = "crash_lean",
         label = "Crash lean",
         default = 75,

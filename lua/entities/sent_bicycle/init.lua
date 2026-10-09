@@ -48,8 +48,12 @@ local IMPACT_SOUND_MIN_SPEED = 150
 local IMPACT_SOUND_INTERVAL = 0.2
 -- Impacts closer to head-on than this (dot product with the heading) count as frontal.
 local FRONTAL_IMPACT_DOT = 0.6
--- Any impact this many times bicycle_crash_speed throws the rider off, frontal or not.
+-- Any other impact this many times bicycle_crash_speed throws the rider off, frontal or not.
 local ANY_IMPACT_CRASH_SCALE = 2
+-- Surfaces at most this steep (deg from the bike's up) are ground the tyres land on, as in the wheel traces. Hitting
+-- them is a landing, judged by bicycle_land_crash_speed instead.
+local MAX_LANDING_GROUND_ANGLE = 60
+local MIN_LANDING_GROUND_UP = math.cos(math.rad(MAX_LANDING_GROUND_ANGLE))
 
 -- Sprint-pedalling and leaning forward tuck the rider forward and wheelieing leans them back, blending in and out at
 -- this rate.
@@ -792,18 +796,25 @@ function ENT:EmitBicycleSound(...)
 end
 
 --- @param impactSpeed number Speed into what was hit (u/s)
---- @param hitNormal Vector
+--- @param surfaceNormal Vector Facing out of what was hit
 --- @return boolean # Whether hitting something this hard throws the rider off
-function ENT:IsCrashImpact(impactSpeed, hitNormal)
+function ENT:IsCrashImpact(impactSpeed, surfaceNormal)
+  if (surfaceNormal:Dot(self:GetUp()) >= MIN_LANDING_GROUND_UP) then
+    return impactSpeed > bicycle.getTuning("land_crash_speed")
+  end
+
   local crashSpeed = bicycle.getTuning("crash_speed")
-  local isFrontal = math.abs(hitNormal:Dot(self:GetForward())) > FRONTAL_IMPACT_DOT
+  local isFrontal = math.abs(surfaceNormal:Dot(self:GetForward())) > FRONTAL_IMPACT_DOT
 
   return (isFrontal and impactSpeed > crashSpeed) or impactSpeed > crashSpeed * ANY_IMPACT_CRASH_SCALE
 end
 
 -- Changing entity state inside a physics callback is unsafe, so impacts are only recorded here and handled in Think.
 function ENT:PhysicsCollide(collision)
-  local impactSpeed = math.abs(collision.OurOldVelocity:Dot(collision.HitNormal))
+  local approachSpeed = collision.OurOldVelocity:Dot(collision.HitNormal)
+  local impactSpeed = math.abs(approachSpeed)
+  -- Turned to face against the bike's way into what it hit, whichever way the engine gave it.
+  local surfaceNormal = approachSpeed > 0 and collision.HitNormal * -1 or collision.HitNormal
 
   if (impactSpeed > IMPACT_SOUND_MIN_SPEED and self.nextImpactSoundAt < CurTime()) then
     self.nextImpactSoundAt = CurTime() + IMPACT_SOUND_INTERVAL
@@ -817,7 +828,7 @@ function ENT:PhysicsCollide(collision)
     return
   end
 
-  if (self:IsCrashImpact(impactSpeed, collision.HitNormal)) then
+  if (self:IsCrashImpact(impactSpeed, surfaceNormal)) then
     self.hasPendingCrash = true
   end
 end

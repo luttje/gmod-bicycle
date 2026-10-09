@@ -23,7 +23,10 @@ bicycle.guide.registerChapter({
       },
     },
     { type = "heading", text = "Crashing" },
-    { type = "tip", text = "Hitting something hard enough throws you over the handlebars." },
+    {
+      type = "tip",
+      text = "Hitting something hard enough throws you over the handlebars, and so does landing from too high.",
+    },
     {
       type = "tip",
       text = "Water slows you down, and riding in until the bike is half under throws you off. Server admins can "
