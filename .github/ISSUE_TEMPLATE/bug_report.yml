@@ -37,8 +37,6 @@ body:
     description: |
       Show us the bug. Drag images or videos into this box, or paste a link (YouTube, Streamable, Imgur, ...).
       Tip: `developer 1` in the console turns on the debug overlay, which makes screenshots a lot more useful.
-  validations:
-    required: true
 
 - type: textarea
   id: errors
@@ -67,6 +65,7 @@ body:
     - Singleplayer
     - Multiplayer (listen server / hosting from the menu)
     - Multiplayer (dedicated server)
+    - All of the above
   validations:
     required: true
 
